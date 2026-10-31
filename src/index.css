@@ -647,13 +647,12 @@ body {
 .nav {
   box-sizing: border-box;
   width: min(1180px, calc(100% - 48px));
+  justify-content: space-between;
+  min-height: 84px;
   padding: 12px 0;
-  border-bottom: 1px solid rgba(26, 24, 22, 0.2);
-  min-height: 168px;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.08)),
-    url("/portfolio-nav-ghibli.jpg") center 52% / cover no-repeat;
-  backdrop-filter: blur(12px);
+  border: 0;
+  background: transparent;
+  backdrop-filter: none;
 }
 
 .nav-mark {
@@ -671,17 +670,23 @@ body {
 
 .nav-links {
   width: fit-content;
-  min-width: 520px;
+  min-width: 0;
   margin-left: 0;
   margin-right: 0;
   background: rgba(255, 255, 255, 0.82);
-  box-shadow: 0 8px 24px rgba(255, 255, 255, 0.35);
+  box-shadow: 0 8px 24px rgba(29, 66, 83, 0.12);
   border-radius: 999px;
   backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  gap: 0.3rem;
+  padding: 0.42rem 0.55rem;
 }
 
 .nav-links a {
-  text-shadow: 0 1px 10px rgba(255, 255, 255, 0.75);
+  border-radius: 999px;
+  padding: 0.45rem 0.8rem;
+  text-shadow: none;
+  transition: color 180ms ease, background-color 180ms ease;
 }
 
 .nav-links a {
@@ -2033,15 +2038,19 @@ svg {
 
   .nav-links {
     right: 12px;
-    top: 68px;
+    top: calc(100% - 4px);
     width: min(230px, calc(100vw - 24px));
     align-items: stretch;
+    gap: 4px;
+    padding: 10px;
+    border-radius: 18px;
+    box-shadow: 0 16px 36px rgba(29, 66, 83, 0.18);
   }
 
   .nav-links a {
     display: block;
     text-align: center;
-    padding: 8px;
+    padding: 10px 12px;
   }
 
   .page {
