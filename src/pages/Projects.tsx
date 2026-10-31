@@ -49,7 +49,11 @@ export function Projects() {
       </div>
       <div className="project-archive">
         {projects.map((project, index) => (
-          <Link key={project.id} className="archive-card" to={`/projects/${project.id}`}>
+          <Link
+            key={project.id}
+            className={`archive-card${index === 0 ? " archive-card-featured" : ""}`}
+            to={`/projects/${project.id}`}
+          >
             <span className="archive-number">{String(index + 1).padStart(2, "0")}</span>
             <div className="archive-image"><img src={project.cover.src} alt={project.cover.alt} /></div>
             <div className="archive-copy">

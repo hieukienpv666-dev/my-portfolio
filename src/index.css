@@ -1762,8 +1762,10 @@ body {
 }
 
 .archive-card {
-  grid-template-columns: 36px 1fr;
+  grid-template-columns: minmax(0, 1fr);
   grid-template-rows: minmax(260px, 320px) auto;
+  padding: 0;
+  overflow: hidden;
   border: 1px solid rgba(27, 147, 216, 0.14);
   background: rgba(239, 239, 239, 0.94);
   box-shadow: 0 16px 42px rgba(27, 147, 216, 0.09);
@@ -1784,9 +1786,64 @@ body {
 }
 
 .archive-image {
-  border-radius: 18px;
+  grid-column: 1 / -1;
   border: 0;
   background: #efefef;
+}
+
+.archive-image img {
+  display: block;
+  height: 100%;
+}
+
+.archive-number {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  z-index: 1;
+  padding: 6px 9px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.86);
+}
+
+.archive-copy {
+  grid-column: 1 / -1;
+  padding: 18px 20px 20px;
+}
+
+.archive-card-featured {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(260px, 320px) auto;
+  padding: 0;
+  overflow: hidden;
+}
+
+.archive-card-featured .archive-image {
+  position: absolute;
+  inset: 0 0 auto;
+  z-index: 0;
+  height: 320px;
+  margin: 0;
+}
+
+.archive-card-featured .archive-image img {
+  display: block;
+  width: 100%;
+  height: 320px;
+  object-fit: cover;
+}
+
+.archive-card-featured .archive-number {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  z-index: 1;
+}
+
+.archive-card-featured .archive-copy {
+  grid-column: 1;
+  grid-row: 2;
+  z-index: 1;
 }
 
 .shop-showcase {
@@ -1981,6 +2038,11 @@ body {
 
   .archive-card {
     grid-template-rows: 240px auto;
+  }
+
+  .archive-card-featured .archive-image,
+  .archive-card-featured .archive-image img {
+    height: 240px;
   }
 
   .archive-card:nth-child(odd) {
