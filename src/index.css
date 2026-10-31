@@ -1028,8 +1028,11 @@ body {
 /* Skyward long-read hero inspired by hand-painted fantasy worlds */
 .sky-hero {
   position: relative;
+  left: 50%;
+  width: min(1180px, calc(100vw - 48px));
+  margin: 0;
+  transform: translateX(-50%);
   min-height: calc(100vh - 84px);
-  margin: 0 calc((min(1180px, 100vw - 48px) - 100vw + 48px) / 2);
   overflow: hidden;
   background:
     linear-gradient(180deg, rgba(31, 166, 229, 0.96), rgba(103, 198, 236, 0.92) 58%, rgba(220, 239, 242, 0.98));
@@ -1983,7 +1986,6 @@ body,
 .page,
 .nav,
 .footer-inner,
-.sky-hero,
 .manifesto,
 .about-page,
 .project-archive,
@@ -2044,8 +2046,9 @@ svg {
     min-height: 620px;
     height: min(78svh, 720px);
     max-height: none;
-    margin-left: calc(50% - 50vw);
-    margin-right: calc(50% - 50vw);
+    left: 50%;
+    margin: 0;
+    transform: translateX(-50%);
   }
 
   .sky-hero-top {
