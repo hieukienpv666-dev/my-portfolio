@@ -60,22 +60,20 @@ export function Home() {
 
       <section className="calendar-section">
         <div className="calendar-heading">
-          <span className="calendar-label">Selected artworks</span>
-          <h2 id="artwork-heading">A collection of <em>small worlds.</em></h2>
-          <p>Places to pause, wander, and imagine what lies just beyond the frame.</p>
+          <span className="calendar-label">Bảng màu cảm hứng</span>
+          <h2 id="artwork-heading">Studio Ghibli</h2>
         </div>
         <div className="calendar-grid" aria-labelledby="artwork-heading">
           {artworks.map((artwork, index) => (
             <article key={artwork.src} className="calendar-card">
+              <span className="calendar-paperclip" aria-hidden="true" />
               <div className="calendar-image">
                 <img src={artwork.src} alt={artwork.alt} />
-                <span className="calendar-number">{String(index + 1).padStart(2, "0")}</span>
               </div>
-              <div className="calendar-meta">
-                <span>WATERCOLOR STUDY</span>
-                <span>{String(index + 1).padStart(2, "0")}</span>
-              </div>
-              <h3 className="calendar-caption">{artwork.title}</h3>
+              <h3 className="calendar-caption">
+                <span>ARTWORK {String(index + 1).padStart(2, "0")}</span>
+                {artwork.title}
+              </h3>
             </article>
           ))}
         </div>
