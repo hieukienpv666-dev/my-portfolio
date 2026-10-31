@@ -60,7 +60,7 @@ export function Home() {
 
       <section className="calendar-section">
         <div className="calendar-heading">
-          <span className="calendar-label">Bảng màu cảm hứng</span>
+          <span className="calendar-label">Artwork</span>
           <h2 id="artwork-heading">Studio Ghibli</h2>
         </div>
         <div className="calendar-grid" aria-labelledby="artwork-heading">

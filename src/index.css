@@ -2220,7 +2220,7 @@ svg {
 
 .calendar-section {
   margin-top: clamp(72px, 10vw, 132px);
-  padding: clamp(20px, 4vw, 48px);
+  padding: clamp(16px, 2vw, 24px);
   background: #fbfcfa;
 }
 
@@ -2257,7 +2257,7 @@ svg {
 .calendar-grid {
   grid-template-columns: repeat(4, minmax(0, 1fr));
   align-items: start;
-  gap: clamp(12px, 2vw, 22px);
+  gap: clamp(12px, 1.5vw, 18px);
   margin: 0;
 }
 
@@ -2336,8 +2336,9 @@ svg {
 
 .calendar-image img {
   width: 100%;
-  aspect-ratio: 1 / 1.04;
+  aspect-ratio: 1 / 1;
   object-fit: cover;
+  object-position: center;
   transition: transform 400ms ease;
 }
 
