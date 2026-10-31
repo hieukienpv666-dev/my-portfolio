@@ -2,8 +2,8 @@ import { Link } from "react-router-dom";
 
 const artworks = [
   {
-    src: "/home-art/floating-spirits.jpg",
-    alt: "Two figures floating above a blue landscape",
+    src: "/home-art/earthsea-dragon.jpg",
+    alt: "A young man standing beside a large dragon beneath a cloudy sky",
     title: "Tales from Earthsea (2006)",
   },
   {
