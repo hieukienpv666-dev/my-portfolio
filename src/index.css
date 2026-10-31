@@ -442,6 +442,7 @@ h3 {
 
 .footer {
   position: relative;
+  isolation: isolate;
   z-index: 2;
   padding: 2.5rem 0 2rem;
   background:
@@ -1974,6 +1975,26 @@ body {
   background:
     linear-gradient(180deg, rgba(239, 239, 239, 0.08), rgba(239, 239, 239, 0.08)),
     url("/ghibli-footer-frame-no-corners.png") center / cover no-repeat;
+}
+
+.footer::before,
+.footer::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  background: #2da6e1;
+  pointer-events: none;
+}
+
+.footer::before {
+  inset: 35% 22% 10%;
+}
+
+.footer::after {
+  top: 10%;
+  left: 40%;
+  right: 40%;
+  height: 15%;
 }
 
 /* Fit every page to the device without horizontal overflow. */
