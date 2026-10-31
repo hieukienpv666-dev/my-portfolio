@@ -4,22 +4,22 @@ const artworks = [
   {
     src: "/home-art/floating-spirits.jpg",
     alt: "Two figures floating above a blue landscape",
-    title: "A quiet meeting above the clouds",
+    title: "Tales from Earthsea (2006)",
   },
   {
     src: "/home-art/rose-house.jpg",
     alt: "A flower-covered house beside the sea, surrounded by a lush garden",
-    title: "The garden by the blue sea",
+    title: "Kiki's Delivery Service (1989)",
   },
   {
     src: "/home-art/alpine-lake.jpg",
     alt: "A blue alpine lake beneath snowy mountains",
-    title: "Where the mountains meet the lake",
+    title: "Spirited Away (2001)",
   },
   {
     src: "/home-art/valley-cottage.jpg",
     alt: "A cottage beside a flowered valley stream",
-    title: "A little home in the wildflowers",
+    title: "Howl's Moving Castle (2004)",
   },
 ];
 
