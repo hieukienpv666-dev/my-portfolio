@@ -1,10 +1,26 @@
 import { Link } from "react-router-dom";
 
 const artworks = [
-  { src: "/home-art/floating-spirits.jpg", alt: "Two figures floating above a blue landscape" },
-  { src: "/home-art/rose-house.jpg", alt: "A flower-covered house surrounded by lush greenery" },
-  { src: "/home-art/alpine-lake.jpg", alt: "A blue alpine lake beneath snowy mountains" },
-  { src: "/home-art/valley-cottage.jpg", alt: "A cottage beside a flowered valley stream" },
+  {
+    src: "/home-art/floating-spirits.jpg",
+    alt: "Two figures floating above a blue landscape",
+    title: "A quiet meeting above the clouds",
+  },
+  {
+    src: "/home-art/rose-house.jpg",
+    alt: "A flower-covered house beside the sea, surrounded by a lush garden",
+    title: "The garden by the blue sea",
+  },
+  {
+    src: "/home-art/alpine-lake.jpg",
+    alt: "A blue alpine lake beneath snowy mountains",
+    title: "Where the mountains meet the lake",
+  },
+  {
+    src: "/home-art/valley-cottage.jpg",
+    alt: "A cottage beside a flowered valley stream",
+    title: "A little home in the wildflowers",
+  },
 ];
 
 export function Home() {
@@ -44,20 +60,23 @@ export function Home() {
 
       <section className="calendar-section">
         <div className="calendar-heading">
-          <p>Selected artwork</p>
+          <span className="calendar-label">Selected artworks</span>
+          <h2 id="artwork-heading">A collection of <em>small worlds.</em></h2>
+          <p>Places to pause, wander, and imagine what lies just beyond the frame.</p>
         </div>
-        <div className="calendar-grid">
+        <div className="calendar-grid" aria-labelledby="artwork-heading">
           {artworks.map((artwork, index) => (
-            <div key={artwork.src} className="calendar-card">
+            <article key={artwork.src} className="calendar-card">
               <div className="calendar-image">
                 <img src={artwork.src} alt={artwork.alt} />
                 <span className="calendar-number">{String(index + 1).padStart(2, "0")}</span>
               </div>
               <div className="calendar-meta">
-                <span>ARTWORK</span>
+                <span>WATERCOLOR STUDY</span>
                 <span>{String(index + 1).padStart(2, "0")}</span>
               </div>
-            </div>
+              <h3 className="calendar-caption">{artwork.title}</h3>
+            </article>
           ))}
         </div>
       </section>
