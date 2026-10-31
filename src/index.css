@@ -1335,13 +1335,15 @@ body {
 .about-page {
   position: relative;
   isolation: isolate;
-  width: min(1120px, 100vw - 48px);
+  left: 50%;
+  width: min(1120px, calc(100vw - 48px));
   max-width: none;
   min-height: calc(100vh - 84px);
-  margin: -2.5rem calc((min(1120px, 100vw - 48px) - 100vw + 48px) / 2);
+  margin: -2.5rem 0 0;
   padding: 2.5rem max(28px, calc((100vw - 1120px) / 2)) 3rem;
   overflow: hidden;
   background: rgba(42, 47, 45, 0.28);
+  transform: translateX(-50%);
 }
 
 .about-background-video {
@@ -2008,7 +2010,6 @@ body,
 .nav,
 .footer-inner,
 .manifesto,
-.about-page,
 .project-archive,
 .service-grid,
 .contact-layout {
@@ -2151,8 +2152,10 @@ svg {
   .about-page,
   .project-detail {
     width: 100%;
+    left: auto;
     margin-left: 0;
     margin-right: 0;
+    transform: none;
   }
 
   .gallery-grid,
