@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 720" role="img" aria-labelledby="title desc">
+  <title id="title">Original floating cloud island landscape</title>
+  <desc id="desc">A whimsical green island with trees, cottages and winding paths floating above clouds.</desc>
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#5ebcf2"/><stop offset="1" stop-color="#d6f1f1"/></linearGradient>
+    <linearGradient id="earth" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#7c9b52"/><stop offset="1" stop-color="#4a6742"/></linearGradient>
+    <filter id="soft"><feGaussianBlur stdDeviation="5"/></filter>
+  </defs>
+  <rect width="1200" height="720" fill="url(#sky)"/>
+  <g fill="#fff" opacity=".88"><path d="M0 208h190c18-45 92-49 119-8 29-19 76-8 91 25 51-4 89 8 111 35H0z"/><path d="M780 176h420v95H744c10-30 24-78 36-95z"/></g>
+  <ellipse cx="600" cy="515" rx="390" ry="82" fill="#dfe8d7" opacity=".8" filter="url(#soft)"/>
+  <g stroke="#334f38" stroke-width="5" stroke-linejoin="round">
+    <path d="M240 410c58-122 180-190 357-171 177-9 292 44 370 171l-79 178H328z" fill="url(#earth)"/>
+    <path d="M328 588h610l-61 113H384z" fill="#76513b"/>
+    <path d="M384 701l48-18 64 25 83-31 73 26 79-31 66 20 80-9" fill="none" stroke="#4e392f" stroke-width="18"/>
+  </g>
+  <g fill="#d9c45a" stroke="#334f38" stroke-width="4">
+    <rect x="385" y="346" width="118" height="92" rx="5"/><rect x="711" y="313" width="112" height="88" rx="5"/><rect x="548" y="381" width="104" height="83" rx="5"/>
+    <path d="M369 354l75-66 76 66z" fill="#9d4d38"/><path d="M696 321l71-59 72 59z" fill="#a5573c"/><path d="M535 389l66-58 66 58z" fill="#8e4939"/>
+    <rect x="425" y="378" width="30" height="60" fill="#7b9caf"/><rect x="572" y="409" width="25" height="55" fill="#7b9caf"/><rect x="748" y="342" width="28" height="59" fill="#7b9caf"/>
+  </g>
+  <g fill="#315d42" stroke="#263d31" stroke-width="4">
+    <circle cx="332" cy="377" r="58"/><circle cx="367" cy="350" r="51"/><circle cx="855" cy="344" r="61"/><circle cx="907" cy="372" r="50"/><circle cx="784" cy="420" r="46"/>
+  </g>
+  <g fill="#5c8064" stroke="#263d31" stroke-width="4">
+    <circle cx="463" cy="299" r="45"/><circle cx="507" cy="315" r="39"/><circle cx="634" cy="308" r="52"/><circle cx="676" cy="326" r="43"/>
+  </g>
+  <path d="M610 280c-42 67-12 116-43 174-18 34-68 48-116 76" fill="none" stroke="#e9d8aa" stroke-width="24" stroke-linecap="round"/>
+  <g fill="#6d9b63" stroke="#34543e" stroke-width="3"><path d="M290 478l20 70h-40z"/><path d="M319 482l22 74h-44z"/><path d="M960 452l22 76h-44z"/><path d="M987 468l18 58h-36z"/></g>
+  <g fill="#fff" opacity=".9"><ellipse cx="238" cy="624" rx="130" ry="34"/><ellipse cx="335" cy="626" rx="105" ry="29"/><ellipse cx="858" cy="624" rx="150" ry="37"/><ellipse cx="970" cy="635" rx="90" ry="25"/></g>
+</svg>
