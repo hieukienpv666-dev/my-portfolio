@@ -12,8 +12,8 @@ const artworks = [
     title: "Kiki's Delivery Service (1989)",
   },
   {
-    src: "/home-art/alpine-lake.jpg",
-    alt: "A blue alpine lake beneath snowy mountains",
+    src: "/home-art/haku-garden.jpg",
+    alt: "A figure in a pale robe surrounded by pink and purple flowers",
     title: "Spirited Away (2001)",
   },
   {
