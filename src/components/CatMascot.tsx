@@ -83,13 +83,12 @@ export function CatMascot({
       mascot.classList.toggle("is-curious", distance < 260);
 
       const clamp = (value: number) => Math.max(-1, Math.min(1, value));
-      const horizontalLimit = mascot.classList.contains("is-dark") ? 16 : 14;
-      const verticalLimit = mascot.classList.contains("is-dark") ? 12 : 8;
-      const targetX = clamp(deltaX / 260) * horizontalLimit;
-      const targetY = clamp(deltaY / 260) * verticalLimit;
-      const safeTargetY = mascot.classList.contains("is-dark")
-        ? targetY
-        : Math.max(-0.5, targetY);
+      const isDark = mascot.classList.contains("is-dark");
+      const horizontalLimit = isDark ? 24 : 22;
+      const verticalLimit = isDark ? 14 : 8;
+      const targetX = clamp(deltaX / 180) * horizontalLimit;
+      const targetY = clamp(deltaY / 180) * verticalLimit;
+      const safeTargetY = isDark ? targetY : Math.max(-0.5, targetY);
 
       currentLook.x += (targetX - currentLook.x) * 0.15;
       currentLook.y += (safeTargetY - currentLook.y) * 0.15;
