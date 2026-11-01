@@ -113,6 +113,107 @@ h3 {
   animation: route-page-in 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
+.cloud-transition {
+  position: fixed;
+  z-index: 2147483647;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  visibility: hidden;
+}
+
+.cloud-transition.is-covering,
+.cloud-transition.is-revealing {
+  pointer-events: auto;
+  visibility: visible;
+}
+
+.cloud-rear-fill {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: linear-gradient(145deg, #fff8ec 0%, #f5f4f0 48%, #eaf3fa 100%);
+  opacity: 0;
+  will-change: opacity;
+}
+
+.cloud-transition.is-covering .cloud-rear-fill {
+  animation: cloud-fill-in 800ms ease-in-out both;
+}
+
+.cloud-transition.is-revealing .cloud-rear-fill {
+  animation: cloud-fill-out 800ms ease-in-out both;
+}
+
+.cloud-puff {
+  position: absolute;
+  z-index: 1;
+  max-width: 100%;
+  height: auto;
+  opacity: 0;
+  user-select: none;
+  will-change: transform, opacity;
+}
+
+.cloud-back {
+  --cloud-opacity: 0.7;
+  z-index: 1;
+}
+
+.cloud-middle {
+  --cloud-opacity: 0.9;
+  z-index: 2;
+}
+
+.cloud-front {
+  --cloud-opacity: 1;
+  z-index: 3;
+}
+
+.cloud-transition.is-covering .cloud-puff {
+  animation: cloud-puff-in calc(800ms - var(--cloud-delay)) ease-in-out both;
+  animation-delay: var(--cloud-delay);
+}
+
+.cloud-transition.is-revealing .cloud-puff {
+  animation: cloud-puff-out calc(800ms - var(--cloud-delay)) ease-in-out both;
+  animation-delay: var(--cloud-delay);
+}
+
+@keyframes cloud-fill-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes cloud-fill-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes cloud-puff-in {
+  from {
+    transform: translate3d(var(--cloud-enter-x), var(--cloud-enter-y), 0)
+      rotate(var(--cloud-rotation)) scaleX(var(--cloud-flip));
+    opacity: 0;
+  }
+  to {
+    transform: translate3d(0, 0, 0) rotate(var(--cloud-rotation)) scaleX(var(--cloud-flip));
+    opacity: var(--cloud-opacity, 1);
+  }
+}
+
+@keyframes cloud-puff-out {
+  from {
+    transform: translate3d(0, 0, 0) rotate(var(--cloud-rotation)) scaleX(var(--cloud-flip));
+    opacity: var(--cloud-opacity, 1);
+  }
+  to {
+    transform: translate3d(var(--cloud-exit-x), var(--cloud-exit-y), 0)
+      rotate(var(--cloud-rotation)) scaleX(var(--cloud-flip));
+    opacity: 0;
+  }
+}
+
 @keyframes route-page-in {
   from {
     transform: translateY(12px);
@@ -1195,12 +1296,34 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .cloud-transition.is-covering,
+  .cloud-transition.is-revealing {
+    visibility: hidden;
+    pointer-events: none;
+  }
+
+  .cloud-transition.is-covering .cloud-puff,
+  .cloud-transition.is-revealing .cloud-puff {
+    animation: none;
+  }
+
+  .cloud-transition.is-covering .cloud-rear-fill,
+  .cloud-transition.is-revealing .cloud-rear-fill {
+    animation: none;
+  }
+
   .cinematic-image {
     animation: none;
   }
 
   .cinematic-image {
     transform: scale(1.14);
+  }
+}
+
+@media (max-width: 600px) {
+  .cloud-puff:nth-of-type(n + 9) {
+    display: none;
   }
 }
 
