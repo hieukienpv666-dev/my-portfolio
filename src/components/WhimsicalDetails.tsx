@@ -1,9 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { CSSProperties } from "react";
+import { CatMascot } from "./CatMascot";
 
 type Theme = "light" | "dark";
-type MascotPhase = "idle" | "blink" | "cover" | "reveal";
+type ThemeTransitionPhase = "idle" | "cover" | "reveal";
+
+const THEME_WIPE_HALF_DURATION_MS = 320;
 
 const nightStars = Array.from({ length: 28 }, (_, index) => ({
   left: `${(index * 47 + 13) % 97}%`,
@@ -16,22 +19,11 @@ export function WhimsicalMascot() {
   const [theme, setTheme] = useState<Theme>(() =>
     document.documentElement.dataset.theme === "dark" ? "dark" : "light",
   );
-  const [phase, setPhase] = useState<MascotPhase>("idle");
+  const [phase, setPhase] = useState<ThemeTransitionPhase>("idle");
   const transitionLock = useRef(false);
   const timeouts = useRef<number[]>([]);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [wipeOrigin, setWipeOrigin] = useState({ x: "50vw", y: "50vh" });
-
-  useEffect(() => {
-    for (const src of ["/cat-red.jpg", "/cat-green.jpg"]) {
-      const image = new Image();
-      image.src = src;
-    }
-
-    return () => {
-      timeouts.current.forEach(window.clearTimeout);
-    };
-  }, []);
 
   function applyTheme(nextTheme: Theme) {
     document.documentElement.dataset.theme = nextTheme;
@@ -63,25 +55,28 @@ export function WhimsicalMascot() {
 
     transitionLock.current = true;
     timeouts.current.forEach(window.clearTimeout);
-    setPhase("blink");
+    setPhase("cover");
     timeouts.current = [
-      window.setTimeout(() => setPhase("cover"), 110),
       window.setTimeout(() => {
         applyTheme(nextTheme);
         setPhase("reveal");
-      }, 360),
+      }, THEME_WIPE_HALF_DURATION_MS),
       window.setTimeout(() => {
         setPhase("idle");
         transitionLock.current = false;
-      }, 700),
+      }, THEME_WIPE_HALF_DURATION_MS * 2),
     ];
   }
+
+  useEffect(() => () => {
+    timeouts.current.forEach(window.clearTimeout);
+  }, []);
 
   return createPortal(
     <>
       {phase !== "idle" && (
         <div
-          className={`theme-transition-wipe is-${phase} is-to-${phase === "reveal" ? theme : theme === "light" ? "dark" : "light"}`}
+          className={`theme-transition-wipe is-${phase} is-to-${phase === "cover" ? (theme === "light" ? "dark" : "light") : theme}`}
           style={{
             "--wipe-x": wipeOrigin.x,
             "--wipe-y": wipeOrigin.y,
@@ -89,24 +84,12 @@ export function WhimsicalMascot() {
           aria-hidden="true"
         />
       )}
-      <button
-        ref={buttonRef}
-        className={`whimsical-mascot is-${phase}`}
-        type="button"
-        aria-label={`Chuyển sang theme ${theme === "light" ? "tối" : "sáng"}`}
-        aria-pressed={theme === "dark"}
+      <CatMascot
+        buttonRef={buttonRef}
+        dark={theme === "dark"}
+        onToggle={changeTheme}
         disabled={phase !== "idle"}
-        onClick={changeTheme}
-      >
-        <img
-          className="mascot-cat"
-          src={theme === "dark" ? "/cat-green.jpg" : "/cat-red.jpg"}
-          alt=""
-        />
-        <span className="mascot-sparkle mascot-sparkle-one" aria-hidden="true" />
-        <span className="mascot-sparkle mascot-sparkle-two" aria-hidden="true" />
-        <span className="mascot-sparkle mascot-sparkle-three" aria-hidden="true" />
-      </button>
+      />
     </>,
     document.body,
   );
