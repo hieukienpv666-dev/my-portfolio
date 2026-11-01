@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
+import { createPortal, flushSync } from "react-dom";
 import type { CSSProperties } from "react";
 import { CatMascot } from "./CatMascot";
 
@@ -7,6 +7,16 @@ type Theme = "light" | "dark";
 type ThemeTransitionPhase = "idle" | "cover" | "reveal";
 
 const THEME_WIPE_HALF_DURATION_MS = 320;
+const VIEW_TRANSITION_DURATION_MS = 650;
+
+type ViewTransitionHandle = {
+  ready: Promise<void>;
+  finished: Promise<void>;
+};
+
+type ViewTransitionDocument = Document & {
+  startViewTransition?: (callback: () => void) => ViewTransitionHandle;
+};
 
 const nightStars = Array.from({ length: 28 }, (_, index) => ({
   left: `${(index * 47 + 13) % 97}%`,
@@ -20,6 +30,7 @@ export function WhimsicalMascot() {
     document.documentElement.dataset.theme === "dark" ? "dark" : "light",
   );
   const [phase, setPhase] = useState<ThemeTransitionPhase>("idle");
+  const [viewTransitioning, setViewTransitioning] = useState(false);
   const transitionLock = useRef(false);
   const timeouts = useRef<number[]>([]);
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -40,12 +51,64 @@ export function WhimsicalMascot() {
     if (transitionLock.current) return;
     const nextTheme = theme === "light" ? "dark" : "light";
 
+    transitionLock.current = true;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       applyTheme(nextTheme);
+      transitionLock.current = false;
       return;
     }
 
     const bounds = buttonRef.current?.getBoundingClientRect();
+    timeouts.current.forEach(window.clearTimeout);
+
+    const startViewTransition = (document as ViewTransitionDocument).startViewTransition;
+    if (startViewTransition && bounds) {
+      const x = bounds.left + bounds.width / 2;
+      const y = bounds.top + bounds.height / 2;
+      const radius = Math.max(
+        Math.hypot(x, y),
+        Math.hypot(window.innerWidth - x, y),
+        Math.hypot(x, window.innerHeight - y),
+        Math.hypot(window.innerWidth - x, window.innerHeight - y),
+      );
+
+      try {
+        setViewTransitioning(true);
+        const transition = startViewTransition.call(document, () => {
+          flushSync(() => applyTheme(nextTheme));
+        });
+
+        void transition.ready
+          .then(() => {
+            const animation = document.documentElement.animate(
+              {
+                clipPath: [
+                  `circle(0px at ${x}px ${y}px)`,
+                  `circle(${radius}px at ${x}px ${y}px)`,
+                ],
+              },
+              {
+                duration: VIEW_TRANSITION_DURATION_MS,
+                easing: "cubic-bezier(0.65, 0, 0.35, 1)",
+                pseudoElement: "::view-transition-new(root)",
+              } as KeyframeAnimationOptions & { pseudoElement: string },
+            );
+            return animation.finished;
+          })
+          .catch((error: unknown) => {
+            console.error("The theme view transition could not complete.", error);
+          })
+          .finally(() => {
+            transitionLock.current = false;
+            setViewTransitioning(false);
+          });
+        return;
+      } catch (error) {
+        console.error("The theme view transition could not start; using the fallback.", error);
+        setViewTransitioning(false);
+      }
+    }
+
     if (bounds) {
       setWipeOrigin({
         x: `${bounds.left + bounds.width / 2}px`,
@@ -53,8 +116,6 @@ export function WhimsicalMascot() {
       });
     }
 
-    transitionLock.current = true;
-    timeouts.current.forEach(window.clearTimeout);
     setPhase("cover");
     timeouts.current = [
       window.setTimeout(() => {
@@ -88,7 +149,7 @@ export function WhimsicalMascot() {
         buttonRef={buttonRef}
         dark={theme === "dark"}
         onToggle={changeTheme}
-        disabled={phase !== "idle"}
+        disabled={phase !== "idle" || viewTransitioning}
       />
     </>,
     document.body,

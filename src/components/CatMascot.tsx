@@ -23,7 +23,7 @@ export function CatMascot({
 
     window.clearTimeout(blinkTimeout.current);
     setBlinking(true);
-    blinkTimeout.current = window.setTimeout(() => setBlinking(false), 560);
+    blinkTimeout.current = window.setTimeout(() => setBlinking(false), 650);
     onToggle();
   }
 
