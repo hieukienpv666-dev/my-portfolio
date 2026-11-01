@@ -4109,3 +4109,146 @@ body {
     animation: none !important;
   }
 }
+
+/* Cat personality */
+.cat-mascot {
+  --look-x: 0px;
+  --look-y: 0px;
+}
+
+.cat-head-tilt {
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: transform 1200ms ease-in-out;
+}
+
+.cat-mascot.is-sleeping .cat-head-tilt {
+  transform: rotate(4deg);
+}
+
+.cat-mascot.is-waking .cat-head-tilt {
+  transition: none;
+  animation: cat-wake-shake 300ms ease-out both;
+}
+
+.cat-eyelid {
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: transform 1200ms ease-in-out;
+}
+
+.cat-mascot.is-sleeping .cat-eyelid {
+  transform: scaleY(0.06);
+}
+
+.cat-mascot.is-curious .cat-eyelid {
+  transform: scaleY(1.08);
+}
+
+.cat-mascot.is-waking .cat-eyelid {
+  transition: none;
+  animation: cat-wake-eyes 200ms ease-out both;
+}
+
+.cat-pupil {
+  transform-box: fill-box;
+  transform-origin: center;
+  transform: translate(var(--look-x), var(--look-y));
+  transition: transform 140ms ease-out;
+}
+
+.cat-mascot.is-curious .cat-pupil {
+  transform: translate(var(--look-x), var(--look-y)) scale(1.15);
+}
+
+.cat-mascot.is-random-blinking .cat-eyelid {
+  animation: cat-random-blink 180ms ease-in-out both;
+}
+
+.cat-sleep-z {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.cat-mascot.is-sleeping .cat-sleep-z {
+  opacity: 1;
+}
+
+.cat-sleep-z text {
+  fill: #fff8f0;
+  font-family: var(--serif);
+  font-size: 42px;
+  font-weight: 700;
+  opacity: 0;
+  paint-order: stroke;
+  stroke: rgba(32, 39, 43, 0.22);
+  stroke-width: 2px;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.cat-mascot.is-sleeping .cat-sleep-z-one {
+  animation: cat-sleep-z 3s ease-in-out infinite;
+}
+
+.cat-mascot.is-sleeping .cat-sleep-z-two {
+  animation: cat-sleep-z 3s ease-in-out 1s infinite;
+}
+
+.cat-mascot.is-sleeping .cat-sleep-z-three {
+  animation: cat-sleep-z 3s ease-in-out 2s infinite;
+}
+
+@keyframes cat-random-blink {
+  0%, 100% { transform: scaleY(1); }
+  45%, 60% { transform: scaleY(0.06); }
+}
+
+@keyframes cat-wake-eyes {
+  0% { transform: scaleY(0.06); }
+  70% { transform: scaleY(1.08); }
+  100% { transform: scaleY(1); }
+}
+
+@keyframes cat-wake-shake {
+  0% { transform: rotate(4deg) scale(1.08); }
+  30% { transform: rotate(-3deg) scale(1.04); }
+  55% { transform: rotate(2deg) scale(1.02); }
+  78% { transform: rotate(-1deg) scale(1.01); }
+  100% { transform: rotate(0) scale(1); }
+}
+
+@keyframes cat-sleep-z {
+  0% { opacity: 0; transform: translateY(12px) scale(0.6); }
+  18% { opacity: 0.85; }
+  82% { opacity: 0.65; }
+  100% { opacity: 0; transform: translateY(-30px) scale(1.15); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cat-pupil {
+    transition: none;
+  }
+
+  .cat-mascot.is-sleeping .cat-head-tilt,
+  .cat-mascot.is-waking .cat-head-tilt,
+  .cat-mascot.is-waking .cat-eyelid,
+  .cat-mascot.is-random-blinking .cat-eyelid,
+  .cat-mascot.is-sleeping .cat-sleep-z text {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .cat-mascot.is-sleeping .cat-head-tilt {
+    transform: none;
+  }
+
+  .cat-mascot.is-sleeping .cat-eyelid {
+    transform: scaleY(0.06);
+    transition: none;
+  }
+
+  .cat-mascot.is-sleeping .cat-sleep-z {
+    opacity: 0;
+  }
+}

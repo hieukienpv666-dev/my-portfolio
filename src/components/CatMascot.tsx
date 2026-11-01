@@ -15,6 +15,271 @@ export function CatMascot({
 }: CatMascotProps) {
   const [blinking, setBlinking] = useState(false);
   const blinkTimeout = useRef<number | undefined>(undefined);
+  const mascotRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    const mascot = mascotRef.current;
+    if (!mascot) return;
+
+    const root = document.documentElement;
+    const pointerMedia = window.matchMedia("(pointer: fine) and (hover: hover)");
+    const reducedMotionMedia = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const pointer = { x: 0, y: 0, active: false };
+    const center = { x: 0, y: 0 };
+    const currentLook = { x: 0, y: 0 };
+    let svgScale = 1;
+    let frameId: number | undefined;
+    let idleTimeout: number | undefined;
+    let randomBlinkTimeout: number | undefined;
+    let randomBlinkEndTimeout: number | undefined;
+    let wakeTimeout: number | undefined;
+    let paused = false;
+    let pointerActivityPending = false;
+
+    const clearTimer = (timer: number | undefined) => {
+      if (timer !== undefined) window.clearTimeout(timer);
+    };
+
+    const updateCenter = () => {
+      const bounds = mascot.getBoundingClientRect();
+      center.x = bounds.left + bounds.width / 2;
+      center.y = bounds.top + bounds.height / 2;
+      svgScale = bounds.width / 736;
+    };
+
+    const setLook = (x: number, y: number) => {
+      mascot.style.setProperty("--look-x", `${x * svgScale}px`);
+      mascot.style.setProperty("--look-y", `${y * svgScale}px`);
+    };
+
+    const stopTracking = () => {
+      if (frameId !== undefined) {
+        window.cancelAnimationFrame(frameId);
+        frameId = undefined;
+      }
+      currentLook.x = 0;
+      currentLook.y = 0;
+      setLook(0, 0);
+      mascot.classList.remove("is-curious");
+    };
+
+    const trackingEnabled = () =>
+      pointerMedia.matches && !reducedMotionMedia.matches && pointer.active;
+
+    const animateLook = () => {
+      frameId = undefined;
+      if (pointerActivityPending) {
+        pointerActivityPending = false;
+        activity(false);
+      }
+      if (paused || mascot.classList.contains("is-sleeping") || !trackingEnabled()) {
+        stopTracking();
+        return;
+      }
+
+      const deltaX = pointer.x - center.x;
+      const deltaY = pointer.y - center.y;
+      const distance = Math.hypot(deltaX, deltaY);
+      mascot.classList.toggle("is-curious", distance < 260);
+
+      const clamp = (value: number) => Math.max(-1, Math.min(1, value));
+      const horizontalLimit = mascot.classList.contains("is-dark") ? 16 : 14;
+      const verticalLimit = mascot.classList.contains("is-dark") ? 12 : 8;
+      const targetX = clamp(deltaX / 260) * horizontalLimit;
+      const targetY = clamp(deltaY / 260) * verticalLimit;
+      const safeTargetY = mascot.classList.contains("is-dark")
+        ? targetY
+        : Math.max(-0.5, targetY);
+
+      currentLook.x += (targetX - currentLook.x) * 0.15;
+      currentLook.y += (safeTargetY - currentLook.y) * 0.15;
+      setLook(currentLook.x, currentLook.y);
+
+      if (
+        Math.abs(targetX - currentLook.x) > 0.05 ||
+        Math.abs(safeTargetY - currentLook.y) > 0.05
+      ) {
+        frameId = window.requestAnimationFrame(animateLook);
+      } else {
+        currentLook.x = targetX;
+        currentLook.y = safeTargetY;
+        setLook(targetX, safeTargetY);
+      }
+    };
+
+    const requestLookFrame = () => {
+      if (frameId === undefined && !paused) {
+        frameId = window.requestAnimationFrame(animateLook);
+      }
+    };
+
+    const stopRandomBlink = () => {
+      clearTimer(randomBlinkTimeout);
+      clearTimer(randomBlinkEndTimeout);
+      randomBlinkTimeout = undefined;
+      randomBlinkEndTimeout = undefined;
+      mascot.classList.remove("is-random-blinking");
+    };
+
+    const scheduleRandomBlink = () => {
+      clearTimer(randomBlinkTimeout);
+      randomBlinkTimeout = undefined;
+      if (
+        paused ||
+        mascot.classList.contains("is-sleeping") ||
+        reducedMotionMedia.matches ||
+        document.hidden
+      ) {
+        return;
+      }
+
+      randomBlinkTimeout = window.setTimeout(() => {
+        if (paused || mascot.classList.contains("is-sleeping")) return;
+        mascot.classList.add("is-random-blinking");
+        randomBlinkEndTimeout = window.setTimeout(() => {
+          mascot.classList.remove("is-random-blinking");
+          randomBlinkEndTimeout = undefined;
+          scheduleRandomBlink();
+        }, 180);
+      }, 3000 + Math.random() * 4000);
+    };
+
+    const enterSleep = () => {
+      clearTimer(idleTimeout);
+      idleTimeout = undefined;
+      if (paused) return;
+      stopRandomBlink();
+      stopTracking();
+      mascot.classList.remove("is-waking");
+      clearTimer(wakeTimeout);
+      wakeTimeout = undefined;
+      mascot.classList.add("is-sleeping");
+    };
+
+    const resetIdleTimer = () => {
+      clearTimer(idleTimeout);
+      idleTimeout = undefined;
+      if (paused || document.hidden) return;
+      idleTimeout = window.setTimeout(enterSleep, 25000);
+    };
+
+    const activity = (requestTracking = true) => {
+      if (paused) return;
+      if (mascot.classList.contains("is-sleeping")) {
+        mascot.classList.remove("is-sleeping");
+        if (!reducedMotionMedia.matches) {
+          mascot.classList.add("is-waking");
+          clearTimer(wakeTimeout);
+          wakeTimeout = window.setTimeout(() => {
+            mascot.classList.remove("is-waking");
+            wakeTimeout = undefined;
+          }, 300);
+        }
+      }
+      resetIdleTimer();
+      scheduleRandomBlink();
+      if (requestTracking && trackingEnabled()) requestLookFrame();
+    };
+
+    const isPaused = () =>
+      mascot.disabled ||
+      mascot.classList.contains("is-blinking") ||
+      root.classList.contains("theme-anticipating");
+
+    const syncPausedState = () => {
+      const nextPaused = isPaused();
+      if (nextPaused === paused) return;
+      paused = nextPaused;
+      if (paused) {
+        clearTimer(idleTimeout);
+        idleTimeout = undefined;
+        stopRandomBlink();
+        stopTracking();
+        mascot.classList.remove("is-waking");
+        clearTimer(wakeTimeout);
+        wakeTimeout = undefined;
+        return;
+      }
+
+      if (document.hidden) {
+        enterSleep();
+      } else {
+        resetIdleTimer();
+        scheduleRandomBlink();
+        if (trackingEnabled()) requestLookFrame();
+      }
+    };
+
+    const onPointerMove = (event: PointerEvent) => {
+      if (!pointerMedia.matches || event.pointerType !== "mouse") return;
+      pointer.x = event.clientX;
+      pointer.y = event.clientY;
+      pointer.active = true;
+      pointerActivityPending = true;
+      if (trackingEnabled() && !paused) requestLookFrame();
+    };
+
+    const onActivity = () => activity();
+
+    const onVisibilityChange = () => {
+      if (document.hidden) {
+        enterSleep();
+      }
+    };
+
+    const onMotionPreferenceChange = () => {
+      if (reducedMotionMedia.matches) {
+        stopTracking();
+        stopRandomBlink();
+      } else if (!paused && !mascot.classList.contains("is-sleeping")) {
+        scheduleRandomBlink();
+        if (trackingEnabled()) requestLookFrame();
+      }
+    };
+
+    updateCenter();
+
+    const observer = new MutationObserver(syncPausedState);
+    observer.observe(mascot, { attributes: true, attributeFilter: ["class", "disabled"] });
+    observer.observe(root, { attributes: true, attributeFilter: ["class"] });
+    window.addEventListener("pointermove", onPointerMove, { passive: true });
+    window.addEventListener("keydown", onActivity, true);
+    window.addEventListener("scroll", updateCenter, { passive: true, capture: true });
+    window.addEventListener("scroll", onActivity, { passive: true, capture: true });
+    window.addEventListener("touchstart", onActivity, { passive: true, capture: true });
+    window.addEventListener("click", onActivity, true);
+    window.addEventListener("resize", updateCenter, { passive: true });
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    pointerMedia.addEventListener("change", onMotionPreferenceChange);
+    reducedMotionMedia.addEventListener("change", onMotionPreferenceChange);
+    syncPausedState();
+    if (!paused) {
+      if (document.hidden) enterSleep();
+      else {
+        resetIdleTimer();
+        scheduleRandomBlink();
+      }
+    }
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("keydown", onActivity, true);
+      window.removeEventListener("scroll", updateCenter, true);
+      window.removeEventListener("scroll", onActivity, true);
+      window.removeEventListener("touchstart", onActivity, true);
+      window.removeEventListener("click", onActivity, true);
+      window.removeEventListener("resize", updateCenter);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+      pointerMedia.removeEventListener("change", onMotionPreferenceChange);
+      reducedMotionMedia.removeEventListener("change", onMotionPreferenceChange);
+      if (frameId !== undefined) window.cancelAnimationFrame(frameId);
+      clearTimer(idleTimeout);
+      clearTimer(randomBlinkTimeout);
+      clearTimer(randomBlinkEndTimeout);
+      clearTimer(wakeTimeout);
+    };
+  }, []);
 
   useEffect(() => () => window.clearTimeout(blinkTimeout.current), []);
 
@@ -29,10 +294,17 @@ export function CatMascot({
 
   return (
     <button
-      ref={buttonRef}
       type="button"
       className={`cat-mascot${dark ? " is-dark" : ""}${blinking ? " is-blinking" : ""}`}
       onClick={handleClick}
+      ref={(element) => {
+        mascotRef.current = element;
+        if (typeof buttonRef === "function") {
+          buttonRef(element);
+        } else if (buttonRef) {
+          buttonRef.current = element;
+        }
+      }}
       aria-pressed={dark}
       aria-label={dark ? "Chuyển sang theme sáng" : "Chuyển sang theme tối"}
       disabled={disabled}
@@ -45,21 +317,38 @@ export function CatMascot({
         </defs>
         <rect className="cat-bg-red" width="736" height="736" fill="#a02b34" />
         <circle className="cat-bg-green" cx="368" cy="400" r="560" fill="#a1b486" />
-        <image href="/cat-head.png" x="0" y="0" width="736" height="736" />
-        <ellipse cx="395" cy="404" rx="13" ry="6" fill="#fff8f0" />
+        <g className="cat-head-tilt">
+          <image href="/cat-head.png" x="0" y="0" width="736" height="736" />
+          <ellipse cx="395" cy="404" rx="13" ry="6" fill="#fff8f0" />
 
-        <g className="cat-eyes">
-          <g className="cat-eyes-sleepy" clipPath="url(#cat-lid-sleepy)">
-            <ellipse cx="296" cy="355" rx="57" ry="57" fill="#fff" />
-            <ellipse cx="472" cy="356" rx="49" ry="58" fill="#fff" />
-            <ellipse cx="318" cy="364" rx="9" ry="15" fill="#111" />
-            <ellipse cx="462" cy="364" rx="9" ry="15" fill="#111" />
+          <g className="cat-eyelid">
+            <g className="cat-eyes">
+              <g className="cat-eyes-sleepy" clipPath="url(#cat-lid-sleepy)">
+                <ellipse cx="296" cy="355" rx="57" ry="57" fill="#fff" />
+                <ellipse cx="472" cy="356" rx="49" ry="58" fill="#fff" />
+                <g className="cat-pupil">
+                  <ellipse cx="318" cy="364" rx="9" ry="15" fill="#111" />
+                </g>
+                <g className="cat-pupil">
+                  <ellipse cx="462" cy="364" rx="9" ry="15" fill="#111" />
+                </g>
+              </g>
+              <g className="cat-eyes-awake">
+                <ellipse cx="296" cy="368" rx="53" ry="58" fill="#fff" />
+                <ellipse cx="472" cy="370" rx="50" ry="58" fill="#fff" />
+                <g className="cat-pupil">
+                  <ellipse cx="319" cy="374" rx="11" ry="22" fill="#111" />
+                </g>
+                <g className="cat-pupil">
+                  <ellipse cx="457" cy="376" rx="11" ry="22" fill="#111" />
+                </g>
+              </g>
+            </g>
           </g>
-          <g className="cat-eyes-awake">
-            <ellipse cx="296" cy="368" rx="53" ry="58" fill="#fff" />
-            <ellipse cx="472" cy="370" rx="50" ry="58" fill="#fff" />
-            <ellipse cx="319" cy="374" rx="11" ry="22" fill="#111" />
-            <ellipse cx="457" cy="376" rx="11" ry="22" fill="#111" />
+          <g className="cat-sleep-z" aria-hidden="true">
+            <text className="cat-sleep-z-one" x="548" y="242">z</text>
+            <text className="cat-sleep-z-two" x="592" y="198">z</text>
+            <text className="cat-sleep-z-three" x="628" y="151">z</text>
           </g>
         </g>
       </svg>
