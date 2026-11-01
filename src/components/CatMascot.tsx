@@ -27,7 +27,6 @@ export function CatMascot({
     const pointer = { x: 0, y: 0, active: false };
     const center = { x: 0, y: 0 };
     const currentLook = { x: 0, y: 0 };
-    let svgScale = 1;
     let frameId: number | undefined;
     let idleTimeout: number | undefined;
     let randomBlinkTimeout: number | undefined;
@@ -44,12 +43,11 @@ export function CatMascot({
       const bounds = mascot.getBoundingClientRect();
       center.x = bounds.left + bounds.width / 2;
       center.y = bounds.top + bounds.height / 2;
-      svgScale = bounds.width / 736;
     };
 
     const setLook = (x: number, y: number) => {
-      mascot.style.setProperty("--look-x", `${x * svgScale}px`);
-      mascot.style.setProperty("--look-y", `${y * svgScale}px`);
+      mascot.style.setProperty("--look-x", `${x}`);
+      mascot.style.setProperty("--look-y", `${y}`);
     };
 
     const stopTracking = () => {
@@ -60,6 +58,7 @@ export function CatMascot({
       currentLook.x = 0;
       currentLook.y = 0;
       setLook(0, 0);
+      mascot.removeAttribute("data-looking");
       mascot.classList.remove("is-curious");
     };
 
@@ -77,32 +76,29 @@ export function CatMascot({
         return;
       }
 
+      mascot.setAttribute("data-looking", "");
       const deltaX = pointer.x - center.x;
       const deltaY = pointer.y - center.y;
       const distance = Math.hypot(deltaX, deltaY);
       mascot.classList.toggle("is-curious", distance < 260);
 
       const clamp = (value: number) => Math.max(-1, Math.min(1, value));
-      const isDark = mascot.classList.contains("is-dark");
-      const horizontalLimit = isDark ? 24 : 22;
-      const verticalLimit = isDark ? 14 : 8;
-      const targetX = clamp(deltaX / 180) * horizontalLimit;
-      const targetY = clamp(deltaY / 180) * verticalLimit;
-      const safeTargetY = isDark ? targetY : Math.max(-0.5, targetY);
+      const targetX = clamp(deltaX / 180);
+      const targetY = clamp(deltaY / 180);
 
       currentLook.x += (targetX - currentLook.x) * 0.15;
-      currentLook.y += (safeTargetY - currentLook.y) * 0.15;
+      currentLook.y += (targetY - currentLook.y) * 0.15;
       setLook(currentLook.x, currentLook.y);
 
       if (
         Math.abs(targetX - currentLook.x) > 0.05 ||
-        Math.abs(safeTargetY - currentLook.y) > 0.05
+        Math.abs(targetY - currentLook.y) > 0.05
       ) {
         frameId = window.requestAnimationFrame(animateLook);
       } else {
         currentLook.x = targetX;
-        currentLook.y = safeTargetY;
-        setLook(targetX, safeTargetY);
+        currentLook.y = targetY;
+        setLook(targetX, targetY);
       }
     };
 
@@ -325,22 +321,14 @@ export function CatMascot({
               <g className="cat-eyes-sleepy" clipPath="url(#cat-lid-sleepy)">
                 <ellipse cx="296" cy="355" rx="57" ry="57" fill="#fff" />
                 <ellipse cx="472" cy="356" rx="49" ry="58" fill="#fff" />
-                <g className="cat-pupil">
-                  <ellipse cx="318" cy="364" rx="9" ry="15" fill="#111" />
-                </g>
-                <g className="cat-pupil">
-                  <ellipse cx="462" cy="364" rx="9" ry="15" fill="#111" />
-                </g>
+                <ellipse className="cat-pupil pupil-sleepy-l" cx="318" cy="364" rx="9" ry="15" fill="#111" />
+                <ellipse className="cat-pupil pupil-sleepy-r" cx="462" cy="364" rx="9" ry="15" fill="#111" />
               </g>
               <g className="cat-eyes-awake">
                 <ellipse cx="296" cy="368" rx="53" ry="58" fill="#fff" />
                 <ellipse cx="472" cy="370" rx="50" ry="58" fill="#fff" />
-                <g className="cat-pupil">
-                  <ellipse cx="319" cy="374" rx="11" ry="22" fill="#111" />
-                </g>
-                <g className="cat-pupil">
-                  <ellipse cx="457" cy="376" rx="11" ry="22" fill="#111" />
-                </g>
+                <ellipse className="cat-pupil pupil-awake-l" cx="319" cy="374" rx="11" ry="22" fill="#111" />
+                <ellipse className="cat-pupil pupil-awake-r" cx="457" cy="376" rx="11" ry="22" fill="#111" />
               </g>
             </g>
           </g>

@@ -4112,8 +4112,8 @@ body {
 
 /* Cat personality */
 .cat-mascot {
-  --look-x: 0px;
-  --look-y: 0px;
+  --look-x: 0;
+  --look-y: 0;
 }
 
 .cat-head-tilt {
@@ -4153,13 +4153,20 @@ body {
 .cat-pupil {
   transform-box: fill-box;
   transform-origin: center;
-  transform: translate(var(--look-x), var(--look-y));
   transition: transform 140ms ease-out;
 }
 
-.cat-mascot.is-curious .cat-pupil {
-  transform: translate(var(--look-x), var(--look-y)) scale(1.15);
+.cat-mascot[data-looking] .cat-pupil {
+  transform: translate(
+    calc(var(--shift-x) + var(--look-x, 0) * var(--range-x)),
+    calc(var(--shift-y) + var(--look-y, 0) * var(--range-y))
+  );
 }
+
+.pupil-sleepy-l { --shift-x: -22px; --shift-y: 8px; --range-x: 30px; --range-y: 14px; }
+.pupil-sleepy-r { --shift-x: 10px; --shift-y: 8px; --range-x: 28px; --range-y: 14px; }
+.pupil-awake-l { --shift-x: -23px; --shift-y: -4px; --range-x: 30px; --range-y: 24px; }
+.pupil-awake-r { --shift-x: 15px; --shift-y: -4px; --range-x: 30px; --range-y: 24px; }
 
 .cat-mascot.is-random-blinking .cat-eyelid {
   animation: cat-random-blink 180ms ease-in-out both;
