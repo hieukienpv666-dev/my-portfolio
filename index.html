@@ -27,9 +27,7 @@
           console.warn("Could not read the saved portfolio theme.", error);
         }
 
-        theme ??= window.matchMedia("(prefers-color-scheme: dark)").matches
-          ? "dark"
-          : "light";
+        theme ??= "light";
         document.documentElement.dataset.theme = theme;
       })();
     </script>
