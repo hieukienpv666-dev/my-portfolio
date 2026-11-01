@@ -1,34 +1,67 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
+type MascotPhase = "idle" | "blink" | "wipe" | "pop";
+
 export function WhimsicalMascot() {
-  const [jumping, setJumping] = useState(false);
-  const timeout = useRef<number | undefined>(undefined);
+  const [greenCat, setGreenCat] = useState(false);
+  const [phase, setPhase] = useState<MascotPhase>("idle");
+  const transitionLock = useRef(false);
+  const timeouts = useRef<number[]>([]);
 
-  useEffect(
-    () => () => {
-      window.clearTimeout(timeout.current);
-    },
-    [],
-  );
+  useEffect(() => {
+    for (const src of ["/cat-red.jpg", "/cat-green.jpg"]) {
+      const image = new Image();
+      image.src = src;
+    }
 
-  function makeJump() {
-    window.clearTimeout(timeout.current);
-    setJumping(true);
-    timeout.current = window.setTimeout(() => setJumping(false), 850);
+    return () => {
+      timeouts.current.forEach(window.clearTimeout);
+    };
+  }, []);
+
+  function changeCat() {
+    if (transitionLock.current) return;
+    const nextCatIsGreen = !greenCat;
+
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setGreenCat(nextCatIsGreen);
+      return;
+    }
+
+    transitionLock.current = true;
+    timeouts.current.forEach(window.clearTimeout);
+    setPhase("blink");
+    timeouts.current = [
+      window.setTimeout(() => setPhase("wipe"), 110),
+      window.setTimeout(() => {
+        setGreenCat(nextCatIsGreen);
+        setPhase("pop");
+      }, 360),
+      window.setTimeout(() => {
+        setPhase("idle");
+        transitionLock.current = false;
+      }, 700),
+    ];
   }
 
   return createPortal(
     <button
-      className={`whimsical-mascot${jumping ? " is-jumping" : ""}`}
+      className={`whimsical-mascot is-${phase}`}
       type="button"
-      aria-label="Make Kiki's cat jump"
-      onClick={makeJump}
+      aria-label="Đổi mèo"
+      disabled={phase !== "idle"}
+      onClick={changeCat}
     >
-      <img src="/kikis-logo.png" alt="" />
-      <span className="mascot-sparkle mascot-sparkle-one" />
-      <span className="mascot-sparkle mascot-sparkle-two" />
-      <span className="mascot-sparkle mascot-sparkle-three" />
+      <img
+        className="mascot-cat"
+        src={greenCat ? "/cat-green.jpg" : "/cat-red.jpg"}
+        alt=""
+      />
+      <span className="mascot-color-wipe" aria-hidden="true" />
+      <span className="mascot-sparkle mascot-sparkle-one" aria-hidden="true" />
+      <span className="mascot-sparkle mascot-sparkle-two" aria-hidden="true" />
+      <span className="mascot-sparkle mascot-sparkle-three" aria-hidden="true" />
     </button>,
     document.body,
   );

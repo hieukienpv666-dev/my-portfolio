@@ -3188,66 +3188,101 @@ button[type="submit"]:hover {
   padding: 5px;
   border: 1px solid rgba(255, 248, 236, 0.9);
   border-radius: 50%;
+  overflow: hidden;
   background: rgba(255, 250, 239, 0.92);
   box-shadow: 0 5px 20px rgba(41, 66, 75, 0.2);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
 
-.whimsical-mascot img {
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  object-fit: cover;
-  animation: mascot-wave 2.8s ease-in-out infinite;
+.whimsical-mascot:disabled {
+  cursor: wait;
 }
 
-.whimsical-mascot.is-jumping img {
-  animation: mascot-jump 650ms cubic-bezier(0.2, 0.8, 0.3, 1.2);
+.whimsical-mascot .mascot-cat {
+  position: absolute;
+  inset: 5px;
+  width: calc(100% - 10px);
+  height: calc(100% - 10px);
+  border-radius: 50%;
+  object-fit: cover;
+  will-change: transform, opacity;
+}
+
+.whimsical-mascot.is-blink .mascot-cat {
+  animation: mascot-blink 110ms ease-in-out both;
+}
+
+.mascot-color-wipe {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  clip-path: circle(0% at 50% 50%);
+  background: #9db387;
+  pointer-events: none;
+  will-change: clip-path;
+}
+
+.whimsical-mascot.is-wipe .mascot-color-wipe {
+  animation: mascot-color-wipe 250ms ease-in-out both;
+}
+
+.whimsical-mascot.is-pop .mascot-cat {
+  animation: mascot-pop 340ms cubic-bezier(0.18, 0.85, 0.28, 1.25) both;
 }
 
 .mascot-sparkle {
   position: absolute;
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: #ffe598;
-  box-shadow: 0 0 12px 3px rgba(255, 229, 152, 0.85);
+  z-index: 2;
+  width: 14px;
+  height: 14px;
+  color: #fff1a8;
   opacity: 0;
   pointer-events: none;
 }
 
-.mascot-sparkle-one { top: 4px; left: 5px; }
-.mascot-sparkle-two { top: 10px; right: 0; }
-.mascot-sparkle-three { right: 9px; bottom: 0; }
-
-.whimsical-mascot.is-jumping .mascot-sparkle {
-  animation: mascot-sparkle 650ms ease-out both;
+.mascot-sparkle::before {
+  content: "✦";
+  font-size: 15px;
+  line-height: 1;
+  text-shadow: 0 0 8px rgba(255, 241, 168, 0.95);
 }
 
-.whimsical-mascot.is-jumping .mascot-sparkle-two {
-  animation-delay: 80ms;
+.mascot-sparkle-one { top: 0; left: 3px; }
+.mascot-sparkle-two { top: 7px; right: -2px; }
+.mascot-sparkle-three { right: 5px; bottom: 0; }
+
+.whimsical-mascot.is-pop .mascot-sparkle {
+  animation: mascot-sparkle 300ms ease-out both;
 }
 
-.whimsical-mascot.is-jumping .mascot-sparkle-three {
-  animation-delay: 150ms;
+.whimsical-mascot.is-pop .mascot-sparkle-two {
+  animation-delay: 55ms;
 }
 
-@keyframes mascot-wave {
-  0%, 100% { transform: rotate(-3deg) translateY(0); }
-  50% { transform: rotate(3deg) translateY(-3px); }
+.whimsical-mascot.is-pop .mascot-sparkle-three {
+  animation-delay: 100ms;
 }
 
-@keyframes mascot-jump {
-  0%, 100% { transform: translateY(0) rotate(0); }
-  42% { transform: translateY(-22px) rotate(-9deg); }
-  72% { transform: translateY(2px) rotate(5deg); }
+@keyframes mascot-blink {
+  45% { transform: scale(0.9); }
+  100% { transform: scale(1); }
+}
+
+@keyframes mascot-color-wipe {
+  to { clip-path: circle(75% at 50% 50%); }
+}
+
+@keyframes mascot-pop {
+  0% { opacity: 0.7; transform: scale(0.72); }
+  72% { opacity: 1; transform: scale(1.12); }
+  100% { opacity: 1; transform: scale(1); }
 }
 
 @keyframes mascot-sparkle {
-  0% { opacity: 0; transform: translate3d(0, 0, 0) scale(0.25); }
-  28% { opacity: 1; }
-  100% { opacity: 0; transform: translate3d(0, -26px, 0) scale(0.1); }
+  0% { opacity: 0; transform: translate3d(0, 5px, 0) scale(0.35); }
+  30% { opacity: 1; }
+  100% { opacity: 0; transform: translate3d(0, -13px, 0) scale(1); }
 }
 
 .contact {
@@ -3476,16 +3511,16 @@ button[type="submit"]:hover {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .whimsical-mascot img,
-  .whimsical-mascot.is-jumping img,
-  .whimsical-mascot.is-jumping .mascot-sparkle,
+  .whimsical-mascot .mascot-cat,
+  .mascot-color-wipe,
+  .whimsical-mascot.is-pop .mascot-sparkle,
   .soot-sprite,
   .footer-lantern,
   .contact-celebration span {
     animation: none;
   }
 
-  .mascot-sparkle,
+  .whimsical-mascot .mascot-sparkle,
   .contact-celebration {
     display: none;
   }
