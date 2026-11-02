@@ -333,9 +333,9 @@ export function CatMascot({
             </g>
           </g>
           <g className="cat-sleep-z" aria-hidden="true">
-            <text className="cat-sleep-z-one" x="548" y="242">z</text>
-            <text className="cat-sleep-z-two" x="592" y="198">z</text>
-            <text className="cat-sleep-z-three" x="628" y="151">z</text>
+            <image className="cat-sleep-z-one" href="/cat-z-1.png" x="430" y="270" width="66" height="90" />
+            <image className="cat-sleep-z-two" href="/cat-z-2.png" x="480" y="200" width="77" height="90" />
+            <image className="cat-sleep-z-three" href="/cat-z-3.png" x="510" y="130" width="89" height="90" />
           </g>
         </g>
       </svg>

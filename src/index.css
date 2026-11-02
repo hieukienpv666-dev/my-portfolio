@@ -4181,15 +4181,8 @@ body {
   opacity: 1;
 }
 
-.cat-sleep-z text {
-  fill: #fff8f0;
-  font-family: var(--serif);
-  font-size: 42px;
-  font-weight: 700;
+.cat-sleep-z image {
   opacity: 0;
-  paint-order: stroke;
-  stroke: rgba(32, 39, 43, 0.22);
-  stroke-width: 2px;
   transform-box: fill-box;
   transform-origin: center;
 }
@@ -4241,7 +4234,7 @@ body {
   .cat-mascot.is-waking .cat-head-tilt,
   .cat-mascot.is-waking .cat-eyelid,
   .cat-mascot.is-random-blinking .cat-eyelid,
-  .cat-mascot.is-sleeping .cat-sleep-z text {
+  .cat-mascot.is-sleeping .cat-sleep-z image {
     animation: none !important;
     transition: none !important;
   }
