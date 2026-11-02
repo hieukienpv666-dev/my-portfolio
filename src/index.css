@@ -4851,60 +4851,6 @@ body {
   will-change: transform, opacity;
 }
 
-.soot-light-eyes {
-  position: absolute;
-  z-index: 2;
-  top: 34%;
-  left: 31%;
-  width: 4px;
-  height: 4px;
-  border-radius: 50%;
-  background: #fff;
-  box-shadow: 12px 0 0 #fff;
-  opacity: 0;
-  pointer-events: none;
-}
-
-.soot-light-beetle.is-peeking img {
-  clip-path: inset(0 0 42% 0);
-  opacity: 0.48;
-}
-
-.soot-light-beetle.is-peeking .soot-light-eyes {
-  opacity: 1;
-}
-
-.soot-light-play-star {
-  position: absolute !important;
-  z-index: 1;
-  top: 49%;
-  left: 52%;
-  width: 24px !important;
-  height: 24px !important;
-  object-fit: contain;
-  opacity: 0;
-  pointer-events: none;
-  will-change: transform, opacity;
-}
-
-.soot-light-beetle.is-star-playing .soot-light-aura {
-  opacity: 1;
-  filter: brightness(1.35);
-}
-
-.soot-light-beetle.is-exchanging::after {
-  position: absolute;
-  top: -5px;
-  right: 2px;
-  color: #fff4b1;
-  content: "✦";
-  font-size: 19px;
-  line-height: 1;
-  opacity: 0;
-  text-shadow: 0 0 9px #fff4b1;
-  animation: soot-light-glint 520ms ease-in-out infinite alternate;
-}
-
 .soot-light-spark {
   position: absolute;
   top: 0;
@@ -4915,11 +4861,6 @@ body {
   opacity: 0;
   filter: drop-shadow(0 0 8px currentColor);
   will-change: transform, opacity;
-}
-
-.soot-lights.is-idle .soot-light-aura {
-  opacity: 0.42;
-  animation: none;
 }
 
 .soot-lights.is-hovering .soot-light-aura {
@@ -4985,26 +4926,12 @@ body {
   animation: none;
 }
 
-.soot-lights.is-reduced-motion .soot-light-beetle img,
-.soot-lights.is-reduced-motion .soot-light-spark,
-.soot-lights.is-reduced-motion .soot-light-play-star,
-.soot-lights.is-reduced-motion .soot-light-beetle::after {
-  animation: none;
-}
-
 .soot-lights.is-reduced-motion .soot-light-spark {
   display: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .soot-lights .soot-light-aura,
-  .soot-lights .soot-light-beetle img,
-  .soot-lights .soot-light-beetle::after {
+  .soot-lights .soot-light-aura {
     animation: none;
   }
-}
-
-@keyframes soot-light-glint {
-  from { opacity: 0.25; transform: scale(0.7) rotate(-18deg); }
-  to { opacity: 1; transform: scale(1.15) rotate(18deg); }
 }
