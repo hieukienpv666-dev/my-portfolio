@@ -4749,3 +4749,211 @@ body {
     transition: none;
   }
 }
+
+/* Soot lights */
+.soot-lights {
+  position: fixed;
+  z-index: 4;
+  inset: 0;
+  overflow: visible;
+  display: none;
+  pointer-events: none;
+}
+
+[data-theme="dark"] .soot-lights,
+.soot-lights.is-returning {
+  display: block;
+}
+
+.soot-light-beetle {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 72px;
+  height: 72px;
+  isolation: isolate;
+  will-change: transform;
+}
+
+.soot-light-beetle-2 {
+  width: 66px;
+  height: 66px;
+}
+
+.soot-light-beetle-3 {
+  width: 60px;
+  height: 60px;
+}
+
+.soot-light-aura {
+  position: absolute;
+  z-index: -1;
+  top: 50%;
+  left: 50%;
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  opacity: 0.82;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  mix-blend-mode: screen;
+  animation: soot-light-pulse var(--soot-light-pulse, 3.4s) ease-in-out infinite alternate;
+}
+
+.soot-light-beetle-1 {
+  --soot-light-color: #ff7aa8;
+  --soot-light-pulse: 3.2s;
+}
+
+.soot-light-beetle-2 {
+  --soot-light-color: #d8f3ff;
+  --soot-light-pulse: 4.1s;
+}
+
+.soot-light-beetle-3 {
+  --soot-light-color: #7dffb0;
+  --soot-light-pulse: 3.7s;
+}
+
+.soot-light-aura {
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--soot-light-color) 45%, transparent) 0%,
+    color-mix(in srgb, var(--soot-light-color) 22%, transparent) 32%,
+    transparent 72%
+  );
+}
+
+.soot-light-beetle img {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 0 5px var(--soot-light-color))
+    drop-shadow(0 0 12px color-mix(in srgb, var(--soot-light-color) 62%, transparent));
+  animation: soot-light-bob 3.3s ease-in-out infinite;
+  user-select: none;
+}
+
+.soot-light-beetle-2 img {
+  animation-duration: 3.8s;
+  animation-delay: -1.1s;
+}
+
+.soot-light-beetle-3 img {
+  animation-duration: 4.2s;
+  animation-delay: -2.2s;
+}
+
+.soot-light-spark {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: block;
+  width: 22px;
+  height: auto;
+  opacity: 0;
+  filter: drop-shadow(0 0 8px currentColor);
+  will-change: transform, opacity;
+}
+
+.soot-lights.is-idle .soot-light-aura {
+  opacity: 0.42;
+  animation: none;
+}
+
+.soot-lights.is-idle .soot-light-beetle img {
+  animation: soot-light-sway 4.8s ease-in-out infinite;
+}
+
+.soot-lights.is-hovering .soot-light-aura {
+  opacity: 1;
+  animation-duration: 1.1s;
+}
+
+.soot-lights.is-hovering .soot-light-beetle img {
+  filter: drop-shadow(0 0 8px var(--soot-light-color))
+    drop-shadow(0 0 18px color-mix(in srgb, var(--soot-light-color) 72%, transparent));
+}
+
+.soot-lights.is-tap-glow-1 .soot-light-beetle-1 .soot-light-aura,
+.soot-lights.is-tap-glow-2 .soot-light-beetle-2 .soot-light-aura,
+.soot-lights.is-tap-glow-3 .soot-light-beetle-3 .soot-light-aura {
+  opacity: 1;
+  animation: soot-light-tap 400ms ease-out both;
+}
+
+@keyframes soot-light-pulse {
+  from { opacity: 0.68; }
+  to { opacity: 1; }
+}
+
+@keyframes soot-light-bob {
+  0%, 100% { transform: translateY(0) rotate(-2deg); }
+  50% { transform: translateY(-7px) rotate(2deg); }
+}
+
+@keyframes soot-light-sway {
+  0%, 100% { transform: translateY(0) rotate(-3deg); }
+  50% { transform: translateY(-4px) rotate(3deg); }
+}
+
+@keyframes soot-light-tap {
+  0% { opacity: 0.7; transform: translate(-50%, -50%) scale(1); }
+  45% { opacity: 1; transform: translate(-50%, -50%) scale(1.42); }
+  100% { opacity: 0.85; transform: translate(-50%, -50%) scale(1); }
+}
+
+.soot-lights.is-mobile .soot-light-beetle,
+.soot-lights.is-reduced-motion .soot-light-beetle {
+  top: auto;
+  bottom: 8px;
+  transform: translateX(-50%) !important;
+}
+
+.soot-lights.is-mobile .soot-light-beetle-1,
+.soot-lights.is-reduced-motion .soot-light-beetle-1 {
+  left: 14%;
+}
+
+.soot-lights.is-mobile .soot-light-beetle-2,
+.soot-lights.is-reduced-motion .soot-light-beetle-2 {
+  left: 50%;
+}
+
+.soot-lights.is-mobile .soot-light-beetle-3,
+.soot-lights.is-reduced-motion .soot-light-beetle-3 {
+  left: 86%;
+}
+
+.soot-lights.is-mobile .soot-light-aura,
+.soot-lights.is-reduced-motion .soot-light-aura {
+  width: 180px;
+  height: 180px;
+}
+
+.soot-lights.is-mobile .soot-light-beetle img {
+  animation: soot-light-sway 5s ease-in-out infinite;
+}
+
+.soot-lights.is-reduced-motion .soot-light-aura {
+  opacity: 0.78;
+  animation: none;
+}
+
+.soot-lights.is-reduced-motion .soot-light-beetle img,
+.soot-lights.is-reduced-motion .soot-light-spark {
+  animation: none;
+}
+
+.soot-lights.is-reduced-motion .soot-light-spark {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .soot-lights .soot-light-aura,
+  .soot-lights .soot-light-beetle img {
+    animation: none;
+  }
+}

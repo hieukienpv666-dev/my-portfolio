@@ -4,6 +4,7 @@ import { CloudTransition } from "./CloudTransition";
 import { Footer } from "./Footer";
 import { InteractionEffects } from "./InteractionEffects";
 import { Navbar } from "./Navbar";
+import { SootLights } from "./SootLights";
 import { NightSky, TabTitle, WhimsicalMascot } from "./WhimsicalDetails";
 
 export function Layout() {
@@ -12,6 +13,7 @@ export function Layout() {
       <NightSky />
       <Clouds />
       <Ambient />
+      <SootLights />
       <div className="hills" aria-hidden="true" />
       <Navbar />
       <CloudTransition />
