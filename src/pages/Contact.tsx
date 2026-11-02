@@ -15,6 +15,70 @@ const celebrationBits = Array.from({ length: 10 }, (_, index) => ({
   delay: `${(index % 4) * 45}ms`,
 }));
 
+type Point = { x: number; y: number };
+type FlightCurve = { start: Point; controlOne: Point; controlTwo: Point; end: Point };
+
+type ActiveFlight = {
+  animation: Animation;
+  trailAnimation: Animation;
+  curve: FlightCurve;
+  duration: number;
+  startedAt: number;
+  startScale: number;
+};
+
+function createFlightCurve(start: Point, end: Point): FlightCurve {
+  const deltaX = end.x - start.x;
+  const lift = Math.max(90, Math.min(300, Math.hypot(deltaX, end.y - start.y) * 0.32 + 70));
+  const apex = Math.min(start.y, end.y) - lift;
+
+  return {
+    start,
+    controlOne: { x: start.x + deltaX * 0.28, y: apex },
+    controlTwo: { x: start.x + deltaX * 0.76, y: apex + lift * 0.45 },
+    end,
+  };
+}
+
+function pointOnCurve(curve: FlightCurve, progress: number): Point {
+  const inverse = 1 - progress;
+  const a = inverse ** 3;
+  const b = 3 * inverse ** 2 * progress;
+  const c = 3 * inverse * progress ** 2;
+  const d = progress ** 3;
+
+  return {
+    x:
+      a * curve.start.x +
+      b * curve.controlOne.x +
+      c * curve.controlTwo.x +
+      d * curve.end.x,
+    y:
+      a * curve.start.y +
+      b * curve.controlOne.y +
+      c * curve.controlTwo.y +
+      d * curve.end.y,
+  };
+}
+
+function angleOnCurve(curve: FlightCurve, progress: number): number {
+  const inverse = 1 - progress;
+  const x =
+    3 * inverse ** 2 * (curve.controlOne.x - curve.start.x) +
+    6 * inverse * progress * (curve.controlTwo.x - curve.controlOne.x) +
+    3 * progress ** 2 * (curve.end.x - curve.controlTwo.x);
+  const y =
+    3 * inverse ** 2 * (curve.controlOne.y - curve.start.y) +
+    6 * inverse * progress * (curve.controlTwo.y - curve.controlOne.y) +
+    3 * progress ** 2 * (curve.end.y - curve.controlTwo.y);
+
+  return (Math.atan2(y, x) * 180) / Math.PI;
+}
+
+function flightPathData(curve: FlightCurve): string {
+  return `M ${curve.start.x} ${curve.start.y} C ${curve.controlOne.x} ${curve.controlOne.y}, ${curve.controlTwo.x} ${curve.controlTwo.y}, ${curve.end.x} ${curve.end.y}`;
+}
+
 function SootSprites() {
   const rootRef = useRef<HTMLDivElement>(null);
 
@@ -201,21 +265,345 @@ function SootSprites() {
 
 export function Contact() {
   const [sent, setSent] = useState(false);
+  const [isSending, setIsSending] = useState(false);
+  const [paperFolded, setPaperFolded] = useState(false);
+  const [planeReady, setPlaneReady] = useState(false);
+  const [planeWinding, setPlaneWinding] = useState(false);
+  const [planePosition, setPlanePosition] = useState<Point | null>(null);
+  const [viewport, setViewport] = useState({ width: 0, height: 0 });
+  const formRef = useRef<HTMLFormElement>(null);
+  const mailLinkRef = useRef<HTMLAnchorElement>(null);
+  const planeRef = useRef<SVGGElement>(null);
+  const trailRef = useRef<SVGPathElement>(null);
+  const timersRef = useRef(new Set<number>());
+  const animationsRef = useRef(new Set<Animation>());
+  const mountedRef = useRef(false);
+  const isSendingRef = useRef(false);
+  const sentRef = useRef(false);
+  const stageRef = useRef<"folding" | "scrolling" | "windup" | "flight" | "arrival">("folding");
+  const activeFlightRef = useRef<ActiveFlight | null>(null);
+  const resizeHandlerRef = useRef<(() => void) | null>(null);
+  const planePositionRef = useRef<Point | null>(null);
+
+  const schedule = (callback: () => void, delay: number) => {
+    const timer = window.setTimeout(() => {
+      timersRef.current.delete(timer);
+      if (mountedRef.current) callback();
+    }, delay);
+    timersRef.current.add(timer);
+    return timer;
+  };
+
+  const trackAnimation = (animation: Animation) => {
+    animationsRef.current.add(animation);
+    const remove = () => animationsRef.current.delete(animation);
+    animation.addEventListener("finish", remove, { once: true });
+    animation.addEventListener("cancel", remove, { once: true });
+    return animation;
+  };
+
+  const setPlanePoint = (point: Point) => {
+    planePositionRef.current = point;
+    setPlanePosition(point);
+  };
+
+  const finishImmediately = () => {
+    if (!mountedRef.current) return;
+    if (resizeHandlerRef.current) {
+      window.removeEventListener("resize", resizeHandlerRef.current);
+      resizeHandlerRef.current = null;
+    }
+    activeFlightRef.current = null;
+    for (const animation of animationsRef.current) animation.cancel();
+    animationsRef.current.clear();
+    isSendingRef.current = false;
+    sentRef.current = true;
+    setIsSending(false);
+    setSent(true);
+  };
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      for (const timer of timersRef.current) window.clearTimeout(timer);
+      timersRef.current.clear();
+      for (const animation of animationsRef.current) animation.cancel();
+      animationsRef.current.clear();
+      if (resizeHandlerRef.current) {
+        window.removeEventListener("resize", resizeHandlerRef.current);
+      }
+      mailLinkRef.current?.classList.remove("paper-mail-receiving");
+    };
+  }, []);
 
   function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (isSendingRef.current || sentRef.current) return;
+
+    const currentForm = event.currentTarget;
     const form = new FormData(event.currentTarget);
     const name = String(form.get("name") ?? "");
     const email = String(form.get("email") ?? "");
     const message = String(form.get("message") ?? "");
     const subject = encodeURIComponent(`Portfolio enquiry from ${name}`);
     const body = encodeURIComponent(`Name: ${name}\nEmail: ${email}\n\n${message}`);
+
     window.open(
       `https://mail.google.com/mail/?view=cm&fs=1&to=hieukienpv999@gmail.com&su=${subject}&body=${body}`,
       "_blank",
       "noopener,noreferrer",
     );
-    setSent(true);
+
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      sentRef.current = true;
+      setSent(true);
+      return;
+    }
+
+    const formBounds = currentForm.getBoundingClientRect();
+    const startPoint = {
+      x: formBounds.left + formBounds.width / 2,
+      y: formBounds.top + formBounds.height / 2,
+    };
+    isSendingRef.current = true;
+    stageRef.current = "folding";
+    setPlanePoint(startPoint);
+    setViewport({ width: window.innerWidth, height: window.innerHeight });
+    setPaperFolded(false);
+    setPlaneReady(false);
+    setPlaneWinding(false);
+    setIsSending(true);
+
+    const findMailLink = () =>
+      mailLinkRef.current ??
+      document.querySelector<HTMLAnchorElement>('.contact .fineprint a[href^="mailto:"]');
+
+    const getDestination = (): { point: Point; link: HTMLAnchorElement | null } => {
+      const link = findMailLink();
+      if (!link) {
+        return { point: { x: window.innerWidth - 24, y: 24 }, link: null };
+      }
+
+      const bounds = link.getBoundingClientRect();
+      return {
+        point: { x: bounds.left + 5, y: bounds.top + bounds.height / 2 },
+        link,
+      };
+    };
+
+    const animateFlight = (
+      start: Point,
+      end: Point,
+      duration: number,
+      startScale = 1,
+      startAngle?: number,
+    ) => {
+      const plane = planeRef.current;
+      const trail = trailRef.current;
+      if (!plane || !trail) {
+        console.error("The contact paper-plane animation could not be rendered.");
+        finishImmediately();
+        return;
+      }
+
+      const curve = createFlightCurve(start, end);
+      const keyframes = Array.from({ length: 25 }, (_, index) => {
+        const progress = index / 24;
+        const point = pointOnCurve(curve, progress);
+        const angle =
+          index === 0 && startAngle !== undefined
+            ? startAngle
+            : angleOnCurve(curve, progress);
+        const scale = startScale + (0.3 - startScale) * progress;
+        return {
+          offset: progress,
+          transform: `translate(${point.x}px, ${point.y}px) rotate(${angle}deg) scale(${scale})`,
+          opacity: 1,
+        };
+      });
+
+      trail.setAttribute("d", flightPathData(curve));
+      const pathLength = trail.getTotalLength();
+      trail.style.strokeDasharray = "3 9";
+      trail.style.strokeDashoffset = `${pathLength}`;
+      trail.style.opacity = "0.9";
+      const trailAnimation = trackAnimation(
+        trail.animate(
+          [
+            { strokeDashoffset: pathLength, opacity: 0.2 },
+            { strokeDashoffset: 0, opacity: 0.9 },
+          ],
+          { duration, fill: "forwards", easing: "linear" },
+        ),
+      );
+      const animation = trackAnimation(
+        plane.animate(keyframes, { duration, fill: "forwards", easing: "linear" }),
+      );
+      activeFlightRef.current = {
+        animation,
+        trailAnimation,
+        curve,
+        duration,
+        startedAt: performance.now(),
+        startScale,
+      };
+      stageRef.current = "flight";
+      return { animation, curve, trailAnimation };
+    };
+
+    const startArrival = () => {
+      const plane = planeRef.current;
+      const trail = trailRef.current;
+      const flight = activeFlightRef.current;
+      if (!plane || !trail || !flight) {
+        console.error("The contact paper-plane could not reach its mail destination.");
+        finishImmediately();
+        return;
+      }
+
+      activeFlightRef.current = null;
+      stageRef.current = "arrival";
+      const { point, link } = getDestination();
+      if (link) {
+        link.classList.add("paper-mail-receiving");
+        schedule(() => link.classList.remove("paper-mail-receiving"), 800);
+      }
+
+      const endAngle = angleOnCurve(flight.curve, 1);
+      const arrivalAnimation = trackAnimation(
+        plane.animate(
+          [
+            {
+              transform: `translate(${flight.curve.end.x}px, ${flight.curve.end.y}px) rotate(${endAngle}deg) scale(0.3)`,
+              opacity: 1,
+            },
+            {
+              transform: `translate(${point.x + 5}px, ${point.y}px) rotate(${endAngle}deg) scale(0.015)`,
+              opacity: 0,
+            },
+          ],
+          { duration: 300, fill: "forwards", easing: "ease-in" },
+        ),
+      );
+      trackAnimation(
+        trail.animate(
+          [{ opacity: 0.9 }, { opacity: 0 }],
+          { duration: 300, fill: "forwards", easing: "ease-out" },
+        ),
+      );
+
+      arrivalAnimation.addEventListener(
+        "finish",
+        () => {
+          if (!mountedRef.current) return;
+          if (resizeHandlerRef.current) {
+            window.removeEventListener("resize", resizeHandlerRef.current);
+            resizeHandlerRef.current = null;
+          }
+          activeFlightRef.current = null;
+          isSendingRef.current = false;
+          sentRef.current = true;
+          setIsSending(false);
+          setSent(true);
+        },
+        { once: true },
+      );
+    };
+
+    const launch = () => {
+      if (!mountedRef.current) return;
+      const currentPoint = planePositionRef.current ?? startPoint;
+      setPlanePoint(currentPoint);
+      setViewport({ width: window.innerWidth, height: window.innerHeight });
+      setPlaneReady(true);
+      setPlaneWinding(true);
+      stageRef.current = "windup";
+
+      schedule(() => {
+        const destination = getDestination();
+        const latestPoint = planePositionRef.current ?? currentPoint;
+        const windingPoint = { x: latestPoint.x - 10, y: latestPoint.y + 8 };
+        setPlaneWinding(false);
+        const flight = animateFlight(
+          windingPoint,
+          destination.point,
+          1200,
+          1,
+          -24,
+        );
+        if (flight) schedule(startArrival, 1200);
+      }, 200);
+    };
+
+    const onResize = () => {
+      setViewport({ width: window.innerWidth, height: window.innerHeight });
+      const flight = activeFlightRef.current;
+      if (flight) {
+        const plane = planeRef.current;
+        if (!plane) return;
+        const now = performance.now();
+        const progress = Math.max(0, Math.min(1, (now - flight.startedAt) / flight.duration));
+        const bounds = plane.getBoundingClientRect();
+        const point = { x: bounds.left + bounds.width / 2, y: bounds.top + bounds.height / 2 };
+        const scale = flight.startScale + (0.3 - flight.startScale) * progress;
+        const angle = angleOnCurve(flight.curve, progress);
+        const duration = Math.max(1, flight.duration - (now - flight.startedAt));
+        flight.animation.cancel();
+        flight.trailAnimation.cancel();
+        const destination = getDestination();
+        animateFlight(point, destination.point, duration, scale, angle);
+        return;
+      }
+
+      if (stageRef.current === "folding") {
+        const bounds = formRef.current?.getBoundingClientRect();
+        if (bounds) {
+          setPlanePoint({
+            x: bounds.left + bounds.width / 2,
+            y: bounds.top + bounds.height / 2,
+          });
+        }
+      }
+    };
+
+    resizeHandlerRef.current = onResize;
+    window.addEventListener("resize", onResize);
+
+    schedule(() => setPaperFolded(true), 350);
+    schedule(() => {
+      const destination = getDestination();
+      const rect = destination.link?.getBoundingClientRect();
+      const isOutsideViewport =
+        rect !== undefined &&
+        (rect.top < 0 ||
+          rect.bottom > window.innerHeight ||
+          rect.left < 0 ||
+          rect.right > window.innerWidth);
+
+      if (!destination.link || !isOutsideViewport) {
+        launch();
+        return;
+      }
+
+      stageRef.current = "scrolling";
+      destination.link.scrollIntoView({ behavior: "smooth", block: "center" });
+      let previousTop = destination.link.getBoundingClientRect().top;
+      let stableFrames = 0;
+      const scrollDeadline = performance.now() + 1800;
+      const waitForScroll = () => {
+        if (!mountedRef.current) return;
+        const nextTop = destination.link?.getBoundingClientRect().top ?? previousTop;
+        stableFrames = Math.abs(nextTop - previousTop) < 0.5 ? stableFrames + 1 : 0;
+        previousTop = nextTop;
+        if (stableFrames >= 5 || performance.now() >= scrollDeadline) {
+          launch();
+          return;
+        }
+        schedule(waitForScroll, 100);
+      };
+      schedule(waitForScroll, 100);
+    }, 700);
   }
 
   return (
@@ -229,7 +617,7 @@ export function Contact() {
       {sent ? (
         <>
           <p className="thanks">
-            Thank you. The wind has the letter now—I will write back soon.
+            Gmail đã mở trong tab mới. Bấm Gửi ở đó và lá thư sẽ bay tới tôi nhé ✉️
           </p>
           <div className="contact-celebration" aria-hidden="true">
             {celebrationBits.map((bit, index) => (
@@ -247,27 +635,40 @@ export function Contact() {
           </div>
         </>
       ) : (
-        <form className="letter" onSubmit={onSubmit}>
+        <form
+          className={`letter${isSending ? " is-paper-folding" : ""}${paperFolded ? " is-paper-folded" : ""}`}
+          onSubmit={onSubmit}
+          ref={formRef}
+          aria-disabled={isSending}
+        >
           <label>
             Name
-            <input name="name" type="text" required autoComplete="name" />
+            <input name="name" type="text" required autoComplete="name" disabled={isSending} />
           </label>
           <label>
             Email
-            <input name="email" type="email" required autoComplete="email" />
+            <input name="email" type="email" required autoComplete="email" disabled={isSending} />
           </label>
           <label>
             The work you have in mind
-            <textarea name="message" rows={6} required />
+            <textarea name="message" rows={6} required disabled={isSending} />
           </label>
-          <button className="btn" type="submit">
+          <button className="btn" type="submit" disabled={isSending}>
             Send enquiry ↗
           </button>
         </form>
       )}
       <p className="fineprint">
         Prefer mail clients?{" "}
-        <a href="mailto:hieukienpv999@gmail.com">hieukienpv999@gmail.com</a>
+        <a href="mailto:hieukienpv999@gmail.com" ref={mailLinkRef}>
+          hieukienpv999@gmail.com
+          <span className="paper-mail-envelope" aria-hidden="true">
+            <svg viewBox="0 0 24 24" focusable="false">
+              <rect x="3" y="6" width="18" height="13" rx="2" />
+              <path className="paper-mail-envelope-flap" d="m4 8 8 6 8-6" />
+            </svg>
+          </span>
+        </a>
         {" · "}
         <a
           href="https://mail.google.com/mail/?view=cm&fs=1&to=hieukienpv999@gmail.com"
@@ -280,6 +681,30 @@ export function Contact() {
       <p className="fineprint">
         Phone: <a href="tel:+84962211979">0962211979</a>
       </p>
+      {isSending && planePosition &&
+        createPortal(
+          <svg
+            className="paper-plane-layer"
+            viewBox={`0 0 ${viewport.width} ${viewport.height}`}
+            aria-hidden="true"
+            focusable="false"
+          >
+            <path className="paper-plane-trail" ref={trailRef} d="" />
+            <g
+              className={`paper-plane-aircraft${planeWinding ? " is-winding" : ""}`}
+              ref={planeRef}
+              style={{
+                "--plane-x": `${planePosition.x}px`,
+                "--plane-y": `${planePosition.y}px`,
+                opacity: planeReady ? 1 : 0,
+              } as CSSProperties & Record<`--${string}`, string>}
+            >
+              <path className="paper-plane-body" d="M-48-30 52 0-48 30-24 0Z" />
+              <path className="paper-plane-crease" d="M-48-30-24 0-48 30M-24 0 52 0" />
+            </g>
+          </svg>,
+          document.body,
+        )}
     </section>
   );
 }
