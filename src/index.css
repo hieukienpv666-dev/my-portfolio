@@ -4772,6 +4772,7 @@ body {
   width: 72px;
   height: 72px;
   isolation: isolate;
+  transform-origin: center;
   will-change: transform;
 }
 
@@ -4832,18 +4833,76 @@ body {
   object-fit: contain;
   filter: drop-shadow(0 0 5px var(--soot-light-color))
     drop-shadow(0 0 12px color-mix(in srgb, var(--soot-light-color) 62%, transparent));
-  animation: soot-light-bob 3.3s ease-in-out infinite;
   user-select: none;
 }
 
-.soot-light-beetle-2 img {
-  animation-duration: 3.8s;
-  animation-delay: -1.1s;
+.soot-light-shadow {
+  position: absolute;
+  z-index: -1;
+  bottom: 5px;
+  left: 50%;
+  width: 52%;
+  height: 10px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgb(0 0 0 / 46%), transparent 72%);
+  opacity: 0.42;
+  transform: translateX(-50%);
+  transform-origin: center;
+  will-change: transform, opacity;
 }
 
-.soot-light-beetle-3 img {
-  animation-duration: 4.2s;
-  animation-delay: -2.2s;
+.soot-light-eyes {
+  position: absolute;
+  z-index: 2;
+  top: 34%;
+  left: 31%;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 12px 0 0 #fff;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.soot-light-beetle.is-peeking img {
+  clip-path: inset(0 0 42% 0);
+  opacity: 0.48;
+}
+
+.soot-light-beetle.is-peeking .soot-light-eyes {
+  opacity: 1;
+}
+
+.soot-light-play-star {
+  position: absolute !important;
+  z-index: 1;
+  top: 49%;
+  left: 52%;
+  width: 24px !important;
+  height: 24px !important;
+  object-fit: contain;
+  opacity: 0;
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+
+.soot-light-beetle.is-star-playing .soot-light-aura {
+  opacity: 1;
+  filter: brightness(1.35);
+}
+
+.soot-light-beetle.is-exchanging::after {
+  position: absolute;
+  top: -5px;
+  right: 2px;
+  color: #fff4b1;
+  content: "✦";
+  font-size: 19px;
+  line-height: 1;
+  opacity: 0;
+  text-shadow: 0 0 9px #fff4b1;
+  animation: soot-light-glint 520ms ease-in-out infinite alternate;
 }
 
 .soot-light-spark {
@@ -4861,10 +4920,6 @@ body {
 .soot-lights.is-idle .soot-light-aura {
   opacity: 0.42;
   animation: none;
-}
-
-.soot-lights.is-idle .soot-light-beetle img {
-  animation: soot-light-sway 4.8s ease-in-out infinite;
 }
 
 .soot-lights.is-hovering .soot-light-aura {
@@ -4889,40 +4944,32 @@ body {
   to { opacity: 1; }
 }
 
-@keyframes soot-light-bob {
-  0%, 100% { transform: translateY(0) rotate(-2deg); }
-  50% { transform: translateY(-7px) rotate(2deg); }
-}
-
-@keyframes soot-light-sway {
-  0%, 100% { transform: translateY(0) rotate(-3deg); }
-  50% { transform: translateY(-4px) rotate(3deg); }
-}
-
 @keyframes soot-light-tap {
   0% { opacity: 0.7; transform: translate(-50%, -50%) scale(1); }
   45% { opacity: 1; transform: translate(-50%, -50%) scale(1.42); }
   100% { opacity: 0.85; transform: translate(-50%, -50%) scale(1); }
 }
 
-.soot-lights.is-mobile .soot-light-beetle,
+.soot-lights.is-mobile .soot-light-beetle {
+  top: 0;
+  bottom: auto;
+  left: 0;
+}
+
 .soot-lights.is-reduced-motion .soot-light-beetle {
   top: auto;
   bottom: 8px;
   transform: translateX(-50%) !important;
 }
 
-.soot-lights.is-mobile .soot-light-beetle-1,
 .soot-lights.is-reduced-motion .soot-light-beetle-1 {
   left: 14%;
 }
 
-.soot-lights.is-mobile .soot-light-beetle-2,
 .soot-lights.is-reduced-motion .soot-light-beetle-2 {
   left: 50%;
 }
 
-.soot-lights.is-mobile .soot-light-beetle-3,
 .soot-lights.is-reduced-motion .soot-light-beetle-3 {
   left: 86%;
 }
@@ -4933,17 +4980,15 @@ body {
   height: 180px;
 }
 
-.soot-lights.is-mobile .soot-light-beetle img {
-  animation: soot-light-sway 5s ease-in-out infinite;
-}
-
 .soot-lights.is-reduced-motion .soot-light-aura {
   opacity: 0.78;
   animation: none;
 }
 
 .soot-lights.is-reduced-motion .soot-light-beetle img,
-.soot-lights.is-reduced-motion .soot-light-spark {
+.soot-lights.is-reduced-motion .soot-light-spark,
+.soot-lights.is-reduced-motion .soot-light-play-star,
+.soot-lights.is-reduced-motion .soot-light-beetle::after {
   animation: none;
 }
 
@@ -4953,7 +4998,13 @@ body {
 
 @media (prefers-reduced-motion: reduce) {
   .soot-lights .soot-light-aura,
-  .soot-lights .soot-light-beetle img {
+  .soot-lights .soot-light-beetle img,
+  .soot-lights .soot-light-beetle::after {
     animation: none;
   }
+}
+
+@keyframes soot-light-glint {
+  from { opacity: 0.25; transform: scale(0.7) rotate(-18deg); }
+  to { opacity: 1; transform: scale(1.15) rotate(18deg); }
 }
