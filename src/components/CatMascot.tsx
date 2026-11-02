@@ -310,8 +310,8 @@ export function CatMascot({
             <rect x="200" y="350" width="340" height="80" />
           </clipPath>
         </defs>
-        <rect className="cat-bg-red" width="736" height="736" fill="#a02b34" />
-        <circle className="cat-bg-green" cx="368" cy="400" r="560" fill="#a1b486" />
+        <rect className="cat-bg-base" width="736" height="736" fill="#a1b486" />
+        <circle className="cat-bg-iris" cx="368" cy="400" r="560" fill="#a02b34" />
         <g className="cat-head-tilt">
           <image href="/cat-head.png" x="0" y="0" width="736" height="736" />
           <ellipse cx="395" cy="404" rx="13" ry="6" fill="#fff8f0" />
