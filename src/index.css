@@ -4437,3 +4437,315 @@ body {
   35% { opacity: 1; transform: scale(1.1) rotate(8deg); }
   100% { opacity: 0; transform: scale(0.55) rotate(24deg); }
 }
+
+/* Letter paper */
+.letter {
+  --letter-line: calc(22 / 557 * 100cqw);
+  --letter-message-line: max(var(--letter-line), 16px);
+  --letter-message-offset: max(calc(11 / 557 * 100cqw), 11px);
+  width: min(640px, 100%);
+  max-width: 640px;
+  margin: 45px auto 0;
+  padding: 0;
+  overflow: hidden;
+  container-type: inline-size;
+  border: 0;
+  border-radius: 4px;
+  background: #fdf7e7;
+  color: #2a3552;
+  box-shadow: 0 18px 42px rgba(48, 42, 30, 0.2), 0 3px 8px rgba(48, 42, 30, 0.1);
+  transform: rotate(-0.4deg);
+  transition:
+    transform 700ms cubic-bezier(0.2, 0.75, 0.3, 1),
+    clip-path 350ms cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 250ms ease;
+}
+
+.letter-header {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.letter-writing {
+  position: relative;
+  display: grid;
+  grid-template-rows: repeat(3, var(--letter-line)) calc(7 * var(--letter-message-line)) max(2 * var(--letter-line), 40px);
+  padding: 0 calc(53 / 557 * 100cqw);
+  background-image: repeating-linear-gradient(
+    to bottom,
+    #d4cec0 0 1px,
+    transparent 1px var(--letter-line)
+  );
+  background-size: calc(100% - 106 / 557 * 100cqw) auto;
+  background-position: center calc(11 / 557 * 100cqw);
+  background-repeat: repeat-y;
+  font-family: "Caveat", cursive;
+  color: #2a3552;
+}
+
+.letter-greeting {
+  align-self: stretch;
+  margin: 0;
+  font-family: "Caveat", cursive;
+  font-size: clamp(16px, calc(20 / 557 * 100cqw), 24px);
+  font-weight: 600;
+  line-height: var(--letter-line);
+}
+
+.letter-field {
+  position: relative;
+  z-index: 0;
+  display: flex;
+  min-width: 0;
+  align-items: baseline;
+  gap: calc(8 / 557 * 100cqw);
+  height: var(--letter-line);
+  margin: 0;
+  font-weight: 400;
+}
+
+.letter-field:focus-within::after {
+  position: absolute;
+  z-index: -1;
+  top: 50%;
+  right: 0;
+  left: 0;
+  height: 1px;
+  background: #b86f45;
+  content: "";
+  pointer-events: none;
+}
+
+.letter-prompt {
+  flex: 0 0 auto;
+  color: #756a58;
+  font-family: Georgia, serif;
+  font-size: clamp(12px, calc(14 / 557 * 100cqw), 16px);
+  font-style: italic;
+  line-height: var(--letter-line);
+}
+
+.letter-field input,
+.letter-message textarea {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  outline: 0;
+  background: transparent;
+  color: #2a3552;
+  caret-color: #b86f45;
+  font-family: "Caveat", cursive;
+  font-size: clamp(16px, calc(20 / 557 * 100cqw), 24px);
+  font-weight: 500;
+  line-height: var(--letter-line);
+}
+
+.letter-field input:focus,
+.letter-message textarea:focus {
+  box-shadow: none;
+}
+
+.letter-message {
+  display: block;
+  min-width: 0;
+  height: calc(7 * var(--letter-message-line));
+  margin: 0;
+}
+
+.letter-message textarea {
+  resize: none;
+  overflow: auto;
+  background-color: #fdf7e7;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    #d4cec0 0 1px,
+    transparent 1px var(--letter-message-line)
+  );
+  background-size: 100% var(--letter-message-line);
+  background-position: 0 var(--letter-message-offset);
+  background-repeat: repeat-y;
+  background-attachment: local;
+  line-height: var(--letter-message-line);
+}
+
+.letter-message textarea:focus {
+  background-image:
+    linear-gradient(
+      to bottom,
+      transparent calc(var(--letter-message-offset) - 1px),
+      #b86f45 calc(var(--letter-message-offset) - 1px) var(--letter-message-offset)
+    ),
+    repeating-linear-gradient(
+      to bottom,
+      #d4cec0 0 1px,
+      transparent 1px var(--letter-message-line)
+    );
+  background-size: 100% var(--letter-message-line), 100% var(--letter-message-line);
+  background-position: 0 0, 0 var(--letter-message-offset);
+  background-repeat: no-repeat, repeat-y;
+  background-attachment: local, local;
+}
+
+.letter-footer {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    #d4cec0 0 1px,
+    transparent 1px var(--letter-line)
+  );
+  background-size: 100% var(--letter-line);
+  background-position: 0 var(--letter-message-offset);
+  background-repeat: repeat-y;
+}
+
+.letter-signoff {
+  color: #2a3552;
+  font-family: "Caveat", cursive;
+  font-size: clamp(16px, calc(20 / 557 * 100cqw), 24px);
+  line-height: var(--letter-line);
+}
+
+.letter-stamp {
+  flex: 0 0 auto;
+  width: clamp(40px, calc(48 / 557 * 100cqw), 54px);
+  height: clamp(40px, calc(48 / 557 * 100cqw), 54px);
+  padding: 0.25rem;
+  border: 2px dashed #fdf7e7;
+  border-radius: 50%;
+  outline: 2px solid #a02b34;
+  background: #a02b34;
+  color: #fff8ec;
+  cursor: pointer;
+  font-family: Georgia, serif;
+  font-size: clamp(13px, calc(15 / 557 * 100cqw), 17px);
+  font-weight: 700;
+  transform: rotate(7deg);
+  transition: transform 180ms ease, filter 180ms ease;
+}
+
+.letter-stamp:hover:not(:disabled) {
+  filter: brightness(1.12);
+  transform: rotate(0) scale(1.08);
+}
+
+.letter-stamp:focus-visible {
+  outline: 3px solid #b86f45;
+  outline-offset: 4px;
+}
+
+.letter-stamp:disabled {
+  cursor: wait;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  clip-path: inset(50%);
+}
+
+.letter.is-paper-folding {
+  overflow: hidden;
+  background: #fff4e6;
+  box-shadow: 0 5px 16px rgba(40, 56, 95, 0.18);
+}
+
+.letter.is-paper-folding > .letter-header,
+.letter.is-paper-folding > .letter-writing {
+  opacity: 1;
+  transition: opacity 220ms ease;
+}
+
+.letter.is-paper-folding.is-paper-folded > .letter-header,
+.letter.is-paper-folding.is-paper-folded > .letter-writing {
+  opacity: 0;
+}
+
+[data-theme="dark"] .letter {
+  border: 1px solid rgba(184, 111, 69, 0.55);
+  background: #fdf7e7;
+  color: #2a3552;
+  box-shadow:
+    0 24px 58px rgba(0, 0, 0, 0.56),
+    0 0 28px rgba(255, 210, 145, 0.14);
+}
+
+[data-theme="dark"] .letter-writing {
+  color: #2a3552;
+}
+
+[data-theme="dark"] .contact .letter .letter-field input,
+[data-theme="dark"] .contact .letter .letter-message textarea {
+  background-color: #fdf7e7;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  background-color: transparent;
+  color: #2a3552;
+  caret-color: #b86f45;
+  box-shadow: none;
+}
+
+[data-theme="dark"] .contact .letter .letter-message textarea {
+  background-image: repeating-linear-gradient(
+    to bottom,
+    #d4cec0 0 1px,
+    transparent 1px var(--letter-message-line)
+  );
+  background-size: 100% var(--letter-message-line);
+  background-position: 0 var(--letter-message-offset);
+  background-repeat: repeat-y;
+  background-attachment: local;
+}
+
+[data-theme="dark"] .contact .letter .letter-field input:focus,
+[data-theme="dark"] .contact .letter .letter-message textarea:focus {
+  background-color: #fdf7e7;
+  background-color: transparent;
+  box-shadow: none;
+}
+
+[data-theme="dark"] .contact .letter .letter-message textarea:focus {
+  background-image:
+    linear-gradient(
+      to bottom,
+      transparent calc(var(--letter-message-offset) - 1px),
+      #b86f45 calc(var(--letter-message-offset) - 1px) var(--letter-message-offset)
+    ),
+    repeating-linear-gradient(
+      to bottom,
+      #d4cec0 0 1px,
+      transparent 1px var(--letter-message-line)
+    );
+  background-size: 100% var(--letter-message-line), 100% var(--letter-message-line);
+  background-position: 0 0, 0 var(--letter-message-offset);
+  background-repeat: no-repeat, repeat-y;
+  background-attachment: local, local;
+}
+
+[data-theme="dark"] .letter.is-paper-folding {
+  border: 1px solid #28385f;
+  background: #fff4e6;
+  box-shadow: 0 5px 16px rgba(40, 56, 95, 0.18);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .letter,
+  .letter-stamp {
+    transition: none;
+  }
+}

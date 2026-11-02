@@ -608,6 +608,12 @@ export function Contact() {
 
   return (
     <section className="prose contact">
+      <link rel="preconnect" href="https://fonts.googleapis.com" />
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+      <link
+        href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600;700&display=swap"
+        rel="stylesheet"
+      />
       <SootSprites />
       <p className="eyebrow">Contact / Available for work</p>
       <h1>Let’s make<br /><em>something memorable.</em></h1>
@@ -641,21 +647,30 @@ export function Contact() {
           ref={formRef}
           aria-disabled={isSending}
         >
-          <label>
-            Name
-            <input name="name" type="text" required autoComplete="name" disabled={isSending} />
-          </label>
-          <label>
-            Email
-            <input name="email" type="email" required autoComplete="email" disabled={isSending} />
-          </label>
-          <label>
-            The work you have in mind
-            <textarea name="message" rows={6} required disabled={isSending} />
-          </label>
-          <button className="btn" type="submit" disabled={isSending}>
-            Send enquiry ↗
-          </button>
+          <img className="letter-header" src="/letter-header.png" alt="" />
+          <div className="letter-writing">
+            <p className="letter-greeting">Dear Hieu Kien,</p>
+            <label className="letter-field">
+              <span className="letter-prompt" aria-hidden="true">From:</span>
+              <span className="visually-hidden">Name</span>
+              <input name="name" type="text" required autoComplete="name" disabled={isSending} />
+            </label>
+            <label className="letter-field">
+              <span className="letter-prompt" aria-hidden="true">Reply to:</span>
+              <span className="visually-hidden">Email</span>
+              <input name="email" type="email" required autoComplete="email" disabled={isSending} />
+            </label>
+            <label className="letter-message">
+              <span className="visually-hidden">The work you have in mind</span>
+              <textarea name="message" rows={7} required disabled={isSending} />
+            </label>
+            <div className="letter-footer">
+              <span className="letter-signoff" aria-hidden="true">— Your name here</span>
+              <button className="letter-stamp" type="submit" disabled={isSending}>
+                Send ✉
+              </button>
+            </div>
+          </div>
         </form>
       )}
       <p className="fineprint">
