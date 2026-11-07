@@ -63,11 +63,6 @@ const sootLights: SootLight[] = [
   },
 ];
 
-const followerOffsets = [
-  { x: 34, y: -18 },
-  { x: 92, y: 12 },
-  { x: 148, y: -22 },
-];
 const mobileAnchors = [0.14, 0.5, 0.86];
 const sparkOffsets = [
   { x: -40, y: -58 },
@@ -82,6 +77,23 @@ const sparkOffsets = [
 
 type Point = { x: number; y: number };
 type FlightPhase = "hidden" | "active" | "entering" | "returning";
+type MotionState = {
+  heading: number;
+  speed: number;
+  baseSpeed: number;
+  phaseOffset: number;
+  goal: Point;
+  pauseUntil: number;
+  lookUntil: number;
+  lookDirection: number;
+  facing: number;
+};
+
+const motionProfiles = [
+  { baseSpeed: 72, phaseOffset: 0.4 },
+  { baseSpeed: 91, phaseOffset: 2.7 },
+  { baseSpeed: 108, phaseOffset: 4.9 },
+];
 
 export function SootLights() {
   const rootRef = useRef<HTMLDivElement>(null);
@@ -97,6 +109,16 @@ export function SootLights() {
     const finePointer = window.matchMedia("(hover: hover) and (pointer: fine)");
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
     const positions: Point[] = sootLights.map(() => ({ x: 0, y: 0 }));
+    const motion: MotionState[] = motionProfiles.map((profile) => ({
+      ...profile,
+      heading: profile.phaseOffset,
+      speed: 0,
+      goal: { x: 0, y: 0 },
+      pauseUntil: 0,
+      lookUntil: 0,
+      lookDirection: 1,
+      facing: 1,
+    }));
     const sparkAnimations = new Set<Animation>();
     const activeSparks = new Set<number>();
     const tapTimeouts = sootLights.map(() => 0);
@@ -107,9 +129,9 @@ export function SootLights() {
     let visible = document.visibilityState === "visible";
     let frameId = 0;
     let phase: FlightPhase = "hidden";
-    let transitionStartedAt = 0;
-    let transitionFrom: Point[] = [];
+    let lastThemeStartedAt = 0;
     let pointer = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+    let pointerBurstUntil = 0;
     let lastFrameAt = performance.now();
     let lastRectScan = 0;
     let obstacleRects: Array<{ bounds: DOMRect; padding: number }> = [];
@@ -123,10 +145,10 @@ export function SootLights() {
       if (moving) {
         window.clearTimeout(walkStopTimeouts[index]);
         walkStopTimeouts[index] = 0;
-        if (!walkingStates[index]) beetle.classList.add("is-walking");
+        beetle.classList.add("is-walking");
         walkingStates[index] = true;
 
-        const level = speed < 0.12 ? 0 : speed < 0.35 ? 1 : 2;
+        const level = speed < 82 ? 0 : speed < 145 ? 1 : 2;
         if (stepDurationLevels[index] !== level) {
           rig.style.setProperty("--step-duration", ["550ms", "420ms", "320ms"][level]);
           stepDurationLevels[index] = level;
@@ -146,6 +168,26 @@ export function SootLights() {
         walkStopTimeouts[index] = 0;
         walkingStates[index] = false;
         beetleRefs.current[index]?.classList.remove("is-walking");
+      });
+    };
+
+    const randomBetween = (min: number, max: number) => min + Math.random() * (max - min);
+    const approach = (current: number, target: number, amount: number) =>
+      current < target ? Math.min(current + amount, target) : Math.max(current - amount, target);
+    const wrapAngle = (angle: number) =>
+      ((angle + Math.PI) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2) - Math.PI;
+
+    const wanderPoint = (index: number, now: number): Point => {
+      const { phaseOffset } = motion[index];
+      const time = now;
+      const angle = phaseOffset + time * 0.00014 + Math.sin(time * 0.00031 + phaseOffset) * 0.42;
+      const radius =
+        95 +
+        Math.sin(time * 0.00019 + phaseOffset * 1.3) * 26 +
+        Math.sin(time * 0.00033 + phaseOffset * 0.7) * 18;
+      return avoidObstacles({
+        x: pointer.x + Math.cos(angle) * radius,
+        y: pointer.y + Math.sin(angle) * radius,
       });
     };
 
@@ -173,12 +215,12 @@ export function SootLights() {
       lastRectScan = now;
       obstacleRects = Array.from(
         document.querySelectorAll<HTMLElement>(
-          "a, button, input, textarea, h1, h2, .card, .project-card, .service-card, .archive-card, .night-moon, [role='button']",
+          "a, button, input, textarea, .night-moon, [role='button']",
         ),
       )
         .map((element) => ({
           bounds: element.getBoundingClientRect(),
-          padding: element.matches(".night-moon") ? 180 : 56,
+          padding: 36,
         }))
         .filter(({ bounds }) =>
           bounds.width > 0 &&
@@ -255,66 +297,148 @@ export function SootLights() {
       if (!visible || (!active && phase !== "returning") || reducedMotion.matches) return;
 
       const mobile = !finePointer.matches;
+      if (mobile && phase !== "returning") {
+        stopWalking();
+        return;
+      }
       const entering = phase === "entering";
       const returning = phase === "returning";
-      const elapsed = Math.min(50, Math.max(1, now - lastFrameAt));
+      const deltaTime = Math.min(0.05, Math.max(0.001, (now - lastFrameAt) / 1000));
       lastFrameAt = now;
       root.classList.toggle("is-hovering", hoveringInteractive);
       scanObstacles(now);
 
-      const transitionProgress = Math.min(1, (now - transitionStartedAt) / 700);
-      const easedProgress = 1 - (1 - transitionProgress) ** 3;
-
-      sootLights.forEach((_, index) => {
-        const previous = positions[index];
-        const offset = followerOffsets[index];
-        let target = mobile
+      const pointerWasTeleported = now < pointerBurstUntil;
+      const centers = sootLights.map((_, index) =>
+        mobile
           ? { x: window.innerWidth * mobileAnchors[index], y: window.innerHeight - 46 }
           : returning
             ? mascotCenter()
-            : { x: pointer.x - offset.x, y: pointer.y - offset.y };
-        target = avoidObstacles(target);
+            : pointer,
+      );
+      let allReturned = true;
+      sootLights.forEach((_, index) => {
+        const state = motion[index];
+        const current = positions[index];
+        let target = mobile ? centers[index] : returning ? mascotCenter() : state.goal;
+        const pointerDistance = Math.hypot(current.x - pointer.x, current.y - pointer.y);
 
-        if (entering || returning) {
-          const origin = transitionFrom[index];
-          target = {
-            x: origin.x + (target.x - origin.x) * easedProgress,
-            y: origin.y + (target.y - origin.y) * easedProgress,
-          };
+        if (!mobile && !returning && !entering) {
+          if (state.pauseUntil > 0 && now >= state.pauseUntil) {
+            state.pauseUntil = 0;
+            state.goal = wanderPoint(index, now);
+          }
+
+          if (state.pauseUntil > now) {
+            target = current;
+          } else if (Math.hypot(state.goal.x - current.x, state.goal.y - current.y) < 8) {
+            state.pauseUntil = now + randomBetween(600, 2200);
+            if (Math.random() < 0.48) {
+              state.lookUntil = now + randomBetween(260, 680);
+              state.lookDirection = -state.facing;
+            } else {
+              state.lookUntil = 0;
+            }
+            target = current;
+          }
         }
 
-        const follow = entering || returning
-          ? 1
-          : 1 - Math.exp(-elapsed / (index === 0 ? 620 : index === 1 ? 760 : 900));
-        const next = {
-          x: previous.x + (target.x - previous.x) * follow,
-          y: previous.y + (target.y - previous.y) * follow,
-        };
-        const distance = Math.hypot(next.x - previous.x, next.y - previous.y);
-        const walking = !mobile && distance > 0.08;
-        updateWalking(index, walking, distance / elapsed);
-        const direction = next.x < previous.x - 0.02 ? -1 : next.x > previous.x + 0.02 ? 1 : 0;
-        const beetle = beetleRefs.current[index];
-        const previousDirection = beetle?.dataset.direction === "-1" ? -1 : 1;
-        const flip = direction === 0 ? previousDirection : direction;
-        if (beetle && direction !== 0) beetle.dataset.direction = String(direction);
-        const angle = walking
-          ? Math.sign(next.x - previous.x) * (2 + Math.min(1, distance / 2))
-          : 0;
-        const point = avoidObstacles(clampPoint(next));
+        if (!returning) target = avoidObstacles(target);
+        const separation = { x: 0, y: 0 };
+        if (!mobile && !returning) {
+          positions.forEach((other, otherIndex) => {
+            if (otherIndex === index) return;
+            let dx = current.x - other.x;
+            let dy = current.y - other.y;
+            let distance = Math.hypot(dx, dy);
+            if (distance >= 44) return;
+            if (distance < 0.001) {
+              const fallback = (Math.min(index, otherIndex) + 1) * 2.4;
+              const direction = index < otherIndex ? 1 : -1;
+              dx = Math.cos(fallback) * direction;
+              dy = Math.sin(fallback) * direction;
+              distance = 1;
+            }
+            const strength = (44 - distance) * 3;
+            separation.x += (dx / distance) * strength;
+            separation.y += (dy / distance) * strength;
+          });
+        }
 
-        setPosition(
-          index,
-          point,
-          angle,
-          flip,
-        );
+        const steeringTarget = {
+          x: target.x + separation.x,
+          y: target.y + separation.y,
+        };
+        const dx = steeringTarget.x - current.x;
+        const dy = steeringTarget.y - current.y;
+        const targetDistance = Math.hypot(dx, dy);
+        const desiredHeading = targetDistance > 0.5 ? Math.atan2(dy, dx) : state.heading;
+        const headingError = wrapAngle(desiredHeading - state.heading);
+        const maxTurn = Math.PI * deltaTime;
+        state.heading += Math.max(-maxTurn, Math.min(maxTurn, headingError));
+
+        const turningAlignment = Math.max(0.35, Math.cos(headingError));
+        const runFactor = Math.max(0, Math.min(1, (pointerDistance - 180) / 450));
+        const cruiseSpeed = pointerWasTeleported
+          ? 220
+          : state.baseSpeed + (220 - state.baseSpeed) * runFactor;
+        const brakingSpeed = Math.sqrt(Math.max(0, 2 * 180 * Math.max(0, targetDistance - 6)));
+        const paused = !mobile && !returning && !entering && state.pauseUntil > now;
+        const desiredSpeed = mobile
+          ? 0
+          : paused
+            ? 0
+            : Math.min(cruiseSpeed, brakingSpeed) * turningAlignment;
+        const acceleration = desiredSpeed < state.speed ? 180 : 95;
+        state.speed = approach(state.speed, desiredSpeed, acceleration * deltaTime);
+        let next = mobile
+          ? target
+          : {
+              x: current.x + Math.cos(state.heading) * state.speed * deltaTime,
+              y: current.y + Math.sin(state.heading) * state.speed * deltaTime,
+            };
+        if (!mobile && !returning) {
+          positions.forEach((other, otherIndex) => {
+            if (otherIndex === index) return;
+            const currentGap = Math.hypot(current.x - other.x, current.y - other.y);
+            const nextGap = Math.hypot(next.x - other.x, next.y - other.y);
+            if (nextGap >= 44) return;
+            if (currentGap < 44) {
+              if (nextGap < currentGap) next = current;
+              return;
+            }
+            const fraction = (currentGap - 44) / (currentGap - nextGap);
+            next = {
+              x: current.x + (next.x - current.x) * fraction,
+              y: current.y + (next.y - current.y) * fraction,
+            };
+          });
+        }
+        const actualDx = next.x - current.x;
+        const moving =
+          !mobile &&
+          state.speed > 7 &&
+          (Math.abs(actualDx) > 0.04 || Math.abs(next.y - current.y) > 0.04);
+        updateWalking(index, moving, state.speed);
+        if (moving && Math.abs(actualDx) > 0.04) state.facing = actualDx < 0 ? -1 : 1;
+        const flip = now < state.lookUntil ? state.lookDirection : state.facing;
+        const beetle = beetleRefs.current[index];
+        if (beetle) beetle.dataset.direction = String(flip);
+        const angle = moving
+          ? Math.sign(actualDx || Math.cos(state.heading)) * 2.5
+          : 0;
+        const point = clampPoint(next);
+
+        setPosition(index, point, angle, flip);
+        if (returning && Math.hypot(centers[index].x - point.x, centers[index].y - point.y) > 16) {
+          allReturned = false;
+        }
       });
 
-      if (entering && transitionProgress >= 1) {
+      if (entering && now - lastThemeStartedAt >= 700) {
         phase = "active";
         root.classList.remove("is-entering");
-      } else if (returning && transitionProgress >= 1) {
+      } else if (returning && (allReturned || now - lastThemeStartedAt > 6000)) {
         hide();
         return;
       }
@@ -334,10 +458,9 @@ export function SootLights() {
         }
         active = false;
         phase = "returning";
+        lastThemeStartedAt = performance.now();
         root.classList.remove("is-entering", "is-hovering");
         root.classList.add("is-active", "is-returning");
-        transitionFrom = positions.map((point) => ({ ...point }));
-        transitionStartedAt = performance.now();
         scheduleFrame();
         return;
       }
@@ -370,10 +493,18 @@ export function SootLights() {
       }
 
       const origin = mascotCenter();
-      positions.forEach((_, index) => setPosition(index, origin, 0, 1));
-      transitionFrom = positions.map((point) => ({ ...point }));
+      positions.forEach((_, index) => {
+        const state = motion[index];
+        setPosition(index, origin, 0, 1);
+        state.heading = state.phaseOffset;
+        state.speed = 0;
+        state.pauseUntil = 0;
+        state.lookUntil = 0;
+        state.facing = 1;
+        state.goal = wanderPoint(index, now);
+      });
       phase = "entering";
-      transitionStartedAt = now;
+      lastThemeStartedAt = now;
       root.classList.add("is-entering");
       lastFrameAt = now;
       scheduleFrame();
@@ -382,7 +513,16 @@ export function SootLights() {
     const onPointerMove = (event: PointerEvent) => {
       if (event.pointerType !== "mouse" || !active || !finePointer.matches || reducedMotion.matches) return;
       if (Math.hypot(event.clientX - pointer.x, event.clientY - pointer.y) > 0.5) {
+        const jumpDistance = Math.hypot(event.clientX - pointer.x, event.clientY - pointer.y);
         pointer = { x: event.clientX, y: event.clientY };
+        if (jumpDistance > 80) {
+          const now = performance.now();
+          pointerBurstUntil = now + 800;
+          motion.forEach((state, index) => {
+            state.goal = wanderPoint(index, now);
+            state.pauseUntil = 0;
+          });
+        }
       }
 
       const target = event.target instanceof Element
@@ -472,6 +612,7 @@ export function SootLights() {
         stopFrame();
         stopWalking();
       } else {
+        lastFrameAt = performance.now();
         scheduleFrame();
       }
     };
@@ -512,10 +653,19 @@ export function SootLights() {
           });
         } else {
           const origin = mascotCenter();
-          positions.forEach((_, index) => setPosition(index, origin, 0, 1));
+          const now = performance.now();
+          positions.forEach((_, index) => {
+            const state = motion[index];
+            setPosition(index, origin, 0, 1);
+            state.heading = state.phaseOffset;
+            state.speed = 0;
+            state.pauseUntil = 0;
+            state.lookUntil = 0;
+            state.facing = 1;
+            state.goal = wanderPoint(index, now);
+          });
           phase = "entering";
-          transitionFrom = positions.map((point) => ({ ...point }));
-          transitionStartedAt = performance.now();
+          lastThemeStartedAt = now;
           root.classList.add("is-entering");
         }
         scheduleFrame();
