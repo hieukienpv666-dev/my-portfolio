@@ -407,7 +407,11 @@ export function WhimsicalMascot() {
 export function NightSky() {
   return (
     <div className="night-sky" aria-hidden="true">
-      <span className="night-moon" />
+      <div className="night-sky-art">
+        <div className="night-sky-image">
+          <span className="night-moon" />
+        </div>
+      </div>
       {nightStars.map((star, index) => (
         <span
           className="night-star"

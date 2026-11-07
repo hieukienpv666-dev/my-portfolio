@@ -15,8 +15,24 @@
       rel="stylesheet"
     />
     <title>Nguyen Hieu Kien · Portfolio</title>
-    <script type="module" crossorigin src="/assets/index-vMlsezSa.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-DxTaFNkC.css">
+    <script>
+      (() => {
+        let theme;
+        try {
+          const savedTheme = localStorage.getItem("portfolio-theme");
+          if (savedTheme === "light" || savedTheme === "dark") {
+            theme = savedTheme;
+          }
+        } catch (error) {
+          console.warn("Could not read the saved portfolio theme.", error);
+        }
+
+        theme ??= "light";
+        document.documentElement.dataset.theme = theme;
+      })();
+    </script>
+    <script type="module" crossorigin src="/assets/index-1DbfJgKW.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-COBHzF3s.css">
   </head>
   <body>
     <div id="root"></div>

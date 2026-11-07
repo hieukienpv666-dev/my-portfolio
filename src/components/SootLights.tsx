@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 
 const sootLights = [
-  { soot: "/soot/soot-1.png", star: "/soot/star-pink.png" },
+  { soot: "/soot/soot-1.png", star: "/soot/star-white.png" },
   { soot: "/soot/soot-2.png", star: "/soot/star-white.png" },
   { soot: "/soot/soot-3.png", star: "/soot/star-green.png" },
 ];
@@ -57,7 +57,7 @@ export function SootLights() {
     let lastPointerMove = performance.now();
     let lastFrameAt = performance.now();
     let lastRectScan = 0;
-    let obstacleRects: DOMRect[] = [];
+    let obstacleRects: Array<{ bounds: DOMRect; padding: number }> = [];
     let hoveringInteractive = false;
 
     const randomBetween = (min: number, max: number) => min + Math.random() * (max - min);
@@ -133,11 +133,14 @@ export function SootLights() {
       lastRectScan = now;
       obstacleRects = Array.from(
         document.querySelectorAll<HTMLElement>(
-          "a, button, input, textarea, h1, h2, .card, .project-card, .service-card, .archive-card, [role='button']",
+          "a, button, input, textarea, h1, h2, .card, .project-card, .service-card, .archive-card, .night-moon, [role='button']",
         ),
       )
-        .map((element) => element.getBoundingClientRect())
-        .filter((bounds) =>
+        .map((element) => ({
+          bounds: element.getBoundingClientRect(),
+          padding: element.matches(".night-moon") ? 180 : 56,
+        }))
+        .filter(({ bounds }) =>
           bounds.width > 0 &&
           bounds.height > 0 &&
           bounds.bottom > 0 &&
@@ -149,8 +152,7 @@ export function SootLights() {
 
     const avoidObstacles = (point: Point) => {
       let safe = clampPoint(point);
-      obstacleRects.forEach((rect) => {
-        const padding = 56;
+      obstacleRects.forEach(({ bounds: rect, padding }) => {
         const left = rect.left - padding;
         const right = rect.right + padding;
         const top = rect.top - padding;
@@ -281,7 +283,7 @@ export function SootLights() {
         const angle = walking
           ? Math.sign(next.x - previous.x) * (2 + Math.min(1, distance / 2))
           : 0;
-        const point = clampPoint(next);
+        const point = avoidObstacles(clampPoint(next));
 
         setPosition(
           index,

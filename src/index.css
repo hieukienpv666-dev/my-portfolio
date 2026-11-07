@@ -3625,9 +3625,9 @@ html.theme-anticipating .cat-mascot {
   --theme-bg: #0f1b2d;
   --theme-text: #f3ead8;
   --theme-muted: #c1ccda;
-  --theme-card: #192a42;
-  --theme-card-alt: #20344d;
-  --theme-border: #41536c;
+  --theme-card: rgba(18, 30, 48, 0.68);
+  --theme-card-alt: rgba(27, 43, 63, 0.62);
+  --theme-border: rgba(154, 177, 208, 0.32);
   --theme-input: #17283f;
   --theme-accent: #f2a17d;
   --theme-button: #a74437;
@@ -3644,37 +3644,98 @@ body {
 }
 
 [data-theme="dark"] body {
-  background:
-    radial-gradient(900px 520px at 12% -12%, rgba(56, 88, 132, 0.28), transparent 68%),
-    radial-gradient(700px 440px at 105% 15%, rgba(94, 70, 120, 0.2), transparent 65%),
-    linear-gradient(180deg, #0f1b2d 0%, #142238 52%, #101d31 100%);
+  background: transparent;
 }
 
-[data-theme="dark"] .night-sky {
+.night-sky {
   position: fixed;
   z-index: 1;
   inset: 0;
   overflow: hidden;
   visibility: visible;
-  opacity: 1;
-  pointer-events: none;
-}
-
-.night-sky {
-  visibility: hidden;
   opacity: 0;
   pointer-events: none;
+  transition: opacity 1000ms ease;
+}
+
+[data-theme="dark"] .night-sky {
+  opacity: 1;
+}
+
+.night-sky-art {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.night-sky-art::before {
+  position: absolute;
+  inset: -40px;
+  background: url("/night-sky.jpg") center / cover no-repeat;
+  content: "";
+  filter: blur(40px) brightness(0.6);
+}
+
+.night-sky-image {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  height: 100vh;
+  aspect-ratio: 736 / 1308;
+  background:
+    linear-gradient(rgba(5, 13, 27, 0.24), rgba(5, 13, 27, 0.24)),
+    url("/night-sky.jpg") center / 100% 100% no-repeat;
+  mask-image: linear-gradient(to right, transparent 0%, #000 12%, #000 88%, transparent 100%);
+  transform: translateX(-50%);
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 12%, #000 88%, transparent 100%);
 }
 
 .night-moon {
   position: absolute;
-  top: 9vh;
-  right: max(8vw, calc((100vw - 1120px) / 2));
-  width: clamp(42px, 6vw, 72px);
+  z-index: 1;
+  top: 55%;
+  left: 62%;
+  width: clamp(56px, 9vw, 96px);
   aspect-ratio: 1;
   border-radius: 50%;
-  background: #e8dfc7;
-  box-shadow: 0 0 24px rgba(232, 223, 199, 0.34), 0 0 72px rgba(177, 187, 216, 0.18);
+  transform: translate(-50%, -50%);
+}
+
+.night-moon::before {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 360%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(220, 244, 255, 0.4), rgba(150, 214, 240, 0.17) 34%, transparent 72%);
+  content: "";
+  transform: translate(-50%, -50%);
+  animation: night-moon-breathe 8s ease-in-out infinite;
+}
+
+.night-moon::after {
+  position: absolute;
+  top: -1.65rem;
+  left: 50%;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #f7f4df;
+  box-shadow: 0 0 7px 2px rgba(247, 244, 223, 0.9), 0 0 18px 5px rgba(173, 226, 255, 0.48);
+  content: "";
+  transform: translateX(-50%);
+  animation: night-moon-sparkle 2.8s ease-in-out infinite alternate;
+}
+
+@keyframes night-moon-breathe {
+  0%, 100% { opacity: 0.65; transform: translate(-50%, -50%) scale(0.9); }
+  50% { opacity: 1; transform: translate(-50%, -50%) scale(1.08); }
+}
+
+@keyframes night-moon-sparkle {
+  from { opacity: 0.45; transform: translateX(-50%) scale(0.7); }
+  to { opacity: 1; transform: translateX(-50%) scale(1.15); }
 }
 
 .night-star {
@@ -3941,6 +4002,23 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .night-sky {
+    transition: none;
+  }
+
+  .night-moon::before,
+  .night-moon::after {
+    animation: none;
+  }
+
+  .night-moon::before {
+    opacity: 0.8;
+  }
+
+  .night-moon::after {
+    opacity: 1;
+  }
+
   .night-star {
     animation: none;
     opacity: 0.75;
@@ -4934,4 +5012,54 @@ body {
   .soot-lights .soot-light-aura {
     animation: none;
   }
+}
+
+[data-theme="dark"] #root,
+[data-theme="dark"] body,
+[data-theme="dark"] .shell,
+[data-theme="dark"] .page,
+[data-theme="dark"] main,
+[data-theme="dark"] section,
+[data-theme="dark"] .footer {
+  background: transparent;
+}
+
+[data-theme="dark"] .sky-hero {
+  background: transparent;
+}
+
+[data-theme="dark"] .nav-links,
+[data-theme="dark"] .nav-toggle {
+  background: rgba(18, 30, 48, 0.72);
+  backdrop-filter: blur(12px);
+}
+
+[data-theme="dark"] .sky-hero-note {
+  background: rgba(18, 30, 48, 0.68);
+  backdrop-filter: blur(12px);
+}
+
+[data-theme="dark"] .calendar-card,
+[data-theme="dark"] .calendar-card:nth-child(2n),
+[data-theme="dark"] .calendar-card:nth-child(3n),
+[data-theme="dark"] .archive-card,
+[data-theme="dark"] .archive-card:nth-child(odd),
+[data-theme="dark"] .archive-card:nth-child(even),
+[data-theme="dark"] .archive-card:nth-child(3n),
+[data-theme="dark"] .project-detail,
+[data-theme="dark"] .service-card,
+[data-theme="dark"] .service-card:nth-child(2),
+[data-theme="dark"] .service-card:nth-child(3),
+[data-theme="dark"] .contact-card,
+[data-theme="dark"] .shop-showcase,
+[data-theme="dark"] .letter,
+[data-theme="dark"] .thanks,
+[data-theme="dark"] .btn-ghost {
+  background: var(--theme-card);
+  backdrop-filter: blur(12px);
+}
+
+[data-theme="dark"] .archive-number {
+  background: var(--theme-card);
+  backdrop-filter: blur(12px);
 }

@@ -1,0 +1,18 @@
+[0:v]fps=30,scale=1920:1080:flags=lanczos,format=gbrp,split=2[base][lo];
+[lo]scale=960:540,split=6[o1][o2][ma][mb][ka][kb];
+[ma]colorchannelmixer=rr=1:gr=1:gg=0:br=1:bb=0,curves=all='0/0 0.62/0 0.78/1 1/1'[maskA];
+[ka]colorchannelmixer=rr=0:gg=0:bb=0[blackA];
+[blackA][o1][maskA]maskedmerge[hlA];
+[hlA]split=2[a1][a2];
+[a1]gblur=sigma=4[ab1];
+[a2]gblur=sigma=14[ab2];
+[ab1][ab2]blend=all_mode=addition,colorchannelmixer=rr=1.15:gg=1.15:bb=1.15,scale=1920:1080[gA];
+[mb]colorchannelmixer=rr=1:rg=-1:gr=1:gg=-1:br=1:bg=-1:bb=0,curves=all='0/0 0.42/0 0.6/1 1/1'[maskB];
+[kb]colorchannelmixer=rr=0:gg=0:bb=0[blackB];
+[blackB][o2][maskB]maskedmerge[hlB];
+[hlB]colorchannelmixer=rr=1:gr=0.38:gg=0:br=0.05:bb=0,split=2[b1][b2];
+[b1]gblur=sigma=6[bb1];
+[b2]gblur=sigma=20[bb2];
+[bb1][bb2]blend=all_mode=addition,colorchannelmixer=rr=2:gg=2:bb=2,colorchannelmixer=rr=2:gg=2:bb=2,scale=1920:1080[gB];
+[base][gA]blend=all_mode=screen[t1];
+[t1][gB]blend=all_mode=screen[out]
