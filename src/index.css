@@ -5083,18 +5083,18 @@ body {
     animation: none;
   }
 
-  .soot-lights .soot-rig-body,
-  .soot-lights .soot-rig-leg,
+  .soot-lights .soot-light-beetle.is-walking .soot-rig-body,
+  .soot-lights .soot-light-beetle.is-walking .soot-rig-leg,
   .soot-lights .soot-rig-eye {
     animation: none;
   }
 
-  .soot-lights .soot-rig-leg,
+  .soot-lights .soot-light-beetle .soot-rig-leg,
   .soot-lights .soot-rig-eye {
     transform: none;
   }
 
-  .soot-lights .soot-rig-leg {
+  .soot-lights .soot-light-beetle .soot-rig-leg {
     transition: none;
   }
 }
