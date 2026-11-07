@@ -1,9 +1,66 @@
 import { useEffect, useRef } from "react";
 
-const sootLights = [
-  { soot: "/soot/soot-1.png", star: "/soot/star-white.png" },
-  { soot: "/soot/soot-2.png", star: "/soot/star-white.png" },
-  { soot: "/soot/soot-3.png", star: "/soot/star-green.png" },
+type RigPart = { src: string; origin: readonly [number, number] };
+type SootLight = {
+  id: string;
+  body: string;
+  star: string;
+  size: readonly [number, number];
+  legs: readonly [RigPart, RigPart];
+  eyes: readonly [RigPart, RigPart];
+  blinkDuration: string;
+  blinkDelay: string;
+};
+
+const sootLights: SootLight[] = [
+  {
+    id: "soot-1",
+    body: "/soot/rig/soot-1-body.png",
+    star: "/soot/star-white.png",
+    size: [270, 220],
+    legs: [
+      { src: "/soot/rig/soot-1-leg1.png", origin: [28.52, 69.09] },
+      { src: "/soot/rig/soot-1-leg2.png", origin: [79.26, 57.73] },
+    ],
+    eyes: [
+      { src: "/soot/rig/soot-1-eye1.png", origin: [45.49, 38.3] },
+      { src: "/soot/rig/soot-1-eye2.png", origin: [59.87, 30.67] },
+    ],
+    blinkDuration: "12.9s",
+    blinkDelay: "-2.1s",
+  },
+  {
+    id: "soot-2",
+    body: "/soot/rig/soot-2-body.png",
+    star: "/soot/star-white.png",
+    size: [209, 220],
+    legs: [
+      { src: "/soot/rig/soot-2-leg1.png", origin: [27.75, 75] },
+      { src: "/soot/rig/soot-2-leg2.png", origin: [85.17, 70.45] },
+    ],
+    eyes: [
+      { src: "/soot/rig/soot-2-eye1.png", origin: [47.92, 50.99] },
+      { src: "/soot/rig/soot-2-eye2.png", origin: [63.73, 56.11] },
+    ],
+    blinkDuration: "15.3s",
+    blinkDelay: "-7.4s",
+  },
+  {
+    id: "soot-3",
+    body: "/soot/rig/soot-3-body.png",
+    star: "/soot/star-green.png",
+    size: [140, 220],
+    legs: [
+      { src: "/soot/rig/soot-3-leg1.png", origin: [31.43, 92.27] },
+      { src: "/soot/rig/soot-3-leg2.png", origin: [85.71, 74.09] },
+    ],
+    eyes: [
+      { src: "/soot/rig/soot-3-eye1.png", origin: [32.28, 60.98] },
+      { src: "/soot/rig/soot-3-eye2.png", origin: [54.67, 56.85] },
+    ],
+    blinkDuration: "18.6s",
+    blinkDelay: "-11.2s",
+  },
 ];
 
 const followerOffsets = [
@@ -29,8 +86,7 @@ type FlightPhase = "hidden" | "active" | "entering" | "returning";
 export function SootLights() {
   const rootRef = useRef<HTMLDivElement>(null);
   const beetleRefs = useRef<Array<HTMLDivElement | null>>([]);
-  const imageRefs = useRef<Array<HTMLImageElement | null>>([]);
-  const shadowRefs = useRef<Array<HTMLSpanElement | null>>([]);
+  const rigRefs = useRef<Array<HTMLDivElement | null>>([]);
   const sparkRefs = useRef<Array<HTMLImageElement | null>>([]);
 
   useEffect(() => {
@@ -44,9 +100,9 @@ export function SootLights() {
     const sparkAnimations = new Set<Animation>();
     const activeSparks = new Set<number>();
     const tapTimeouts = sootLights.map(() => 0);
-    const hopAnimations: Array<{ body: Animation; shadow: Animation } | null> =
-      sootLights.map(() => null);
-    const nextHopAt = sootLights.map(() => 0);
+    const walkStopTimeouts = sootLights.map(() => 0);
+    const stepDurationLevels = sootLights.map(() => -1);
+    const walkingStates = sootLights.map(() => false);
     let active = false;
     let visible = document.visibilityState === "visible";
     let frameId = 0;
@@ -54,59 +110,43 @@ export function SootLights() {
     let transitionStartedAt = 0;
     let transitionFrom: Point[] = [];
     let pointer = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
-    let lastPointerMove = performance.now();
     let lastFrameAt = performance.now();
     let lastRectScan = 0;
     let obstacleRects: Array<{ bounds: DOMRect; padding: number }> = [];
     let hoveringInteractive = false;
 
-    const randomBetween = (min: number, max: number) => min + Math.random() * (max - min);
+    const updateWalking = (index: number, moving: boolean, speed: number) => {
+      const beetle = beetleRefs.current[index];
+      const rig = rigRefs.current[index];
+      if (!beetle || !rig) return;
 
-    const stopHop = (index: number) => {
-      const animation = hopAnimations[index];
-      if (!animation) return;
-      animation.body.cancel();
-      animation.shadow.cancel();
-      hopAnimations[index] = null;
+      if (moving) {
+        window.clearTimeout(walkStopTimeouts[index]);
+        walkStopTimeouts[index] = 0;
+        if (!walkingStates[index]) beetle.classList.add("is-walking");
+        walkingStates[index] = true;
+
+        const level = speed < 0.12 ? 0 : speed < 0.35 ? 1 : 2;
+        if (stepDurationLevels[index] !== level) {
+          rig.style.setProperty("--step-duration", ["550ms", "420ms", "320ms"][level]);
+          stepDurationLevels[index] = level;
+        }
+      } else if (walkingStates[index] && !walkStopTimeouts[index]) {
+        walkStopTimeouts[index] = window.setTimeout(() => {
+          walkStopTimeouts[index] = 0;
+          walkingStates[index] = false;
+          beetle.classList.remove("is-walking");
+        }, 180);
+      }
     };
 
-    const stopHops = (scheduleNext = false) => {
-      hopAnimations.forEach((_, index) => {
-        stopHop(index);
-        if (scheduleNext) nextHopAt[index] = performance.now() + randomBetween(6000, 12000);
+    const stopWalking = () => {
+      walkingStates.forEach((_, index) => {
+        window.clearTimeout(walkStopTimeouts[index]);
+        walkStopTimeouts[index] = 0;
+        walkingStates[index] = false;
+        beetleRefs.current[index]?.classList.remove("is-walking");
       });
-    };
-
-    const startHop = (index: number) => {
-      const body = imageRefs.current[index];
-      const shadow = shadowRefs.current[index];
-      if (!body || !shadow || hopAnimations[index]) return;
-
-      const duration = randomBetween(620, 740);
-      const bodyAnimation = body.animate(
-        [
-          { transform: "translateY(0) scale(1, 1)", offset: 0 },
-          { transform: "translateY(2px) scale(1.06, 0.94)", offset: 0.16 },
-          { transform: "translateY(-18px) scale(0.97, 1.04)", offset: 0.58 },
-          { transform: "translateY(0) scale(1.06, 0.94)", offset: 0.88 },
-          { transform: "translateY(0) scale(1, 1)", offset: 1 },
-        ],
-        { duration, easing: "cubic-bezier(0.2, 0.68, 0.3, 1)" },
-      );
-      const shadowAnimation = shadow.animate(
-        [
-          { transform: "translateX(-50%) scale(1, 1)", opacity: 0.42 },
-          { transform: "translateX(-50%) scale(0.68, 0.8)", opacity: 0.22, offset: 0.58 },
-          { transform: "translateX(-50%) scale(1.06, 1.04)", opacity: 0.4, offset: 0.88 },
-          { transform: "translateX(-50%) scale(1, 1)", opacity: 0.42 },
-        ],
-        { duration, easing: "cubic-bezier(0.2, 0.68, 0.3, 1)" },
-      );
-      hopAnimations[index] = { body: bodyAnimation, shadow: shadowAnimation };
-      bodyAnimation.onfinish = () => {
-        stopHop(index);
-        nextHopAt[index] = performance.now() + randomBetween(6000, 12000);
-      };
     };
 
     const mascotCenter = (): Point => {
@@ -181,15 +221,13 @@ export function SootLights() {
       point: Point,
       angle: number,
       flip: number,
-      scaleX: number,
-      scaleY: number,
     ) => {
       positions[index] = point;
       const beetle = beetleRefs.current[index];
       if (beetle) {
         beetle.style.transform =
           `translate3d(${point.x}px, ${point.y}px, 0) translate(-50%, -50%) ` +
-          `rotate(${angle}deg) scaleX(${flip}) scale(${scaleX}, ${scaleY})`;
+          `rotate(${angle}deg) scaleX(${flip})`;
       }
     };
 
@@ -202,8 +240,8 @@ export function SootLights() {
       active = false;
       phase = "hidden";
       stopFrame();
-      stopHops();
-      root.classList.remove("is-active", "is-entering", "is-returning", "is-idle", "is-hovering");
+      stopWalking();
+      root.classList.remove("is-active", "is-entering", "is-returning", "is-hovering");
     };
 
     const scheduleFrame = () => {
@@ -221,8 +259,6 @@ export function SootLights() {
       const returning = phase === "returning";
       const elapsed = Math.min(50, Math.max(1, now - lastFrameAt));
       lastFrameAt = now;
-      const idle = now - lastPointerMove > 2000;
-      root.classList.toggle("is-idle", idle);
       root.classList.toggle("is-hovering", hoveringInteractive);
       scanObstacles(now);
 
@@ -255,26 +291,8 @@ export function SootLights() {
           y: previous.y + (target.y - previous.y) * follow,
         };
         const distance = Math.hypot(next.x - previous.x, next.y - previous.y);
-        const walking = !mobile && !entering && !returning && distance > 0.08;
-        if (!mobile && idle && !entering && !returning && now >= nextHopAt[index]) {
-          startHop(index);
-        }
-
-        const stridePhase = ((now / (1000 + index * 100) + index * 0.23) % 1 + 1) % 1;
-        const strideKeyframes = [
-          { x: 1, y: 1 },
-          { x: 1.06, y: 0.94 },
-          { x: 1, y: 0.99 },
-          { x: 0.97, y: 1.04 },
-          { x: 1, y: 1 },
-        ];
-        const stridePosition = stridePhase * (strideKeyframes.length - 1);
-        const strideIndex = Math.floor(stridePosition);
-        const strideBlend = (stridePosition - strideIndex) ** 2 * (3 - 2 * (stridePosition - strideIndex));
-        const strideStart = strideKeyframes[strideIndex];
-        const strideEnd = strideKeyframes[Math.min(strideIndex + 1, strideKeyframes.length - 1)];
-        const strideX = walking ? strideStart.x + (strideEnd.x - strideStart.x) * strideBlend : 1;
-        const strideY = walking ? strideStart.y + (strideEnd.y - strideStart.y) * strideBlend : 1;
+        const walking = !mobile && distance > 0.08;
+        updateWalking(index, walking, distance / elapsed);
         const direction = next.x < previous.x - 0.02 ? -1 : next.x > previous.x + 0.02 ? 1 : 0;
         const beetle = beetleRefs.current[index];
         const previousDirection = beetle?.dataset.direction === "-1" ? -1 : 1;
@@ -290,8 +308,6 @@ export function SootLights() {
           point,
           angle,
           flip,
-          strideX,
-          strideY,
         );
       });
 
@@ -318,8 +334,7 @@ export function SootLights() {
         }
         active = false;
         phase = "returning";
-        stopHops();
-        root.classList.remove("is-entering", "is-idle", "is-hovering");
+        root.classList.remove("is-entering", "is-hovering");
         root.classList.add("is-active", "is-returning");
         transitionFrom = positions.map((point) => ({ ...point }));
         transitionStartedAt = performance.now();
@@ -336,10 +351,6 @@ export function SootLights() {
       root.classList.toggle("is-reduced-motion", reducedMotion.matches);
 
       const now = performance.now();
-      nextHopAt.forEach((_, index) => {
-        nextHopAt[index] = now + 6000 + index * 2200 + randomBetween(0, 1200);
-      });
-      stopHops();
 
       if (reducedMotion.matches) {
         stopFrame();
@@ -353,15 +364,13 @@ export function SootLights() {
             { x: window.innerWidth * mobileAnchors[index], y: window.innerHeight - 46 },
             0,
             1,
-            1,
-            1,
           );
         });
         return;
       }
 
       const origin = mascotCenter();
-      positions.forEach((_, index) => setPosition(index, origin, 0, 1, 1, 1));
+      positions.forEach((_, index) => setPosition(index, origin, 0, 1));
       transitionFrom = positions.map((point) => ({ ...point }));
       phase = "entering";
       transitionStartedAt = now;
@@ -374,12 +383,6 @@ export function SootLights() {
       if (event.pointerType !== "mouse" || !active || !finePointer.matches || reducedMotion.matches) return;
       if (Math.hypot(event.clientX - pointer.x, event.clientY - pointer.y) > 0.5) {
         pointer = { x: event.clientX, y: event.clientY };
-        const now = performance.now();
-        lastPointerMove = now;
-        stopHops(true);
-        nextHopAt.forEach((_, index) => {
-          nextHopAt[index] = now + randomBetween(6000, 12000);
-        });
       }
 
       const target = event.target instanceof Element
@@ -467,7 +470,7 @@ export function SootLights() {
       visible = document.visibilityState === "visible";
       if (!visible) {
         stopFrame();
-        stopHops(true);
+        stopWalking();
       } else {
         scheduleFrame();
       }
@@ -482,8 +485,6 @@ export function SootLights() {
             { x: window.innerWidth * mobileAnchors[index], y: window.innerHeight - 46 },
             0,
             1,
-            1,
-            1,
           );
         });
       }
@@ -494,29 +495,24 @@ export function SootLights() {
       root.classList.toggle("is-reduced-motion", reducedMotion.matches);
       if (reducedMotion.matches) {
         stopFrame();
-        stopHops(true);
+        stopWalking();
         beetleRefs.current.forEach((beetle) => beetle?.style.removeProperty("transform"));
         return;
       }
       if (active) {
-        nextHopAt.forEach((_, index) => {
-          nextHopAt[index] = performance.now() + randomBetween(6000, 12000);
-        });
         if (!finePointer.matches) {
-          stopHops();
+          stopWalking();
           positions.forEach((_, index) => {
             setPosition(
               index,
               { x: window.innerWidth * mobileAnchors[index], y: window.innerHeight - 46 },
               0,
               1,
-              1,
-              1,
             );
           });
         } else {
           const origin = mascotCenter();
-          positions.forEach((_, index) => setPosition(index, origin, 0, 1, 1, 1));
+          positions.forEach((_, index) => setPosition(index, origin, 0, 1));
           phase = "entering";
           transitionFrom = positions.map((point) => ({ ...point }));
           transitionStartedAt = performance.now();
@@ -551,7 +547,7 @@ export function SootLights() {
       document.removeEventListener("visibilitychange", onVisibilityChange);
       window.removeEventListener("resize", onResize);
       stopFrame();
-      stopHops();
+      stopWalking();
       sparkAnimations.forEach((animation) => animation.cancel());
       activeSparks.forEach((index) => sparkRefs.current[index]?.style.removeProperty("opacity"));
       activeSparks.clear();
@@ -560,7 +556,6 @@ export function SootLights() {
         "is-active",
         "is-entering",
         "is-returning",
-        "is-idle",
         "is-hovering",
         "is-mobile",
         "is-reduced-motion",
@@ -573,26 +568,45 @@ export function SootLights() {
       {sootLights.map((light, index) => (
         <div
           className={`soot-light-beetle soot-light-beetle-${index + 1}`}
-          key={light.soot}
+          key={light.id}
+          style={{ aspectRatio: `${light.size[0]} / ${light.size[1]}` }}
           ref={(element) => {
             beetleRefs.current[index] = element;
           }}
         >
           <span className="soot-light-aura" />
-          <span
-            className="soot-light-shadow"
+          <span className="soot-light-shadow" />
+          <div
+            className="soot-rig"
+            style={{ aspectRatio: `${light.size[0]} / ${light.size[1]}` }}
             ref={(element) => {
-              shadowRefs.current[index] = element;
+              rigRefs.current[index] = element;
+              element?.style.setProperty("--blink-duration", light.blinkDuration);
+              element?.style.setProperty("--blink-delay", light.blinkDelay);
             }}
-          />
-          <img
-            src={light.soot}
-            alt=""
-            draggable="false"
-            ref={(element) => {
-              imageRefs.current[index] = element;
-            }}
-          />
+          >
+            <img className="soot-rig-layer soot-rig-body" src={light.body} alt="" draggable="false" />
+            {light.legs.map((leg, legIndex) => (
+              <img
+                className={`soot-rig-layer soot-rig-leg soot-rig-leg-${legIndex + 1}`}
+                key={leg.src}
+                src={leg.src}
+                alt=""
+                draggable="false"
+                style={{ transformOrigin: `${leg.origin[0]}% ${leg.origin[1]}%` }}
+              />
+            ))}
+            {light.eyes.map((eye, eyeIndex) => (
+              <img
+                className={`soot-rig-layer soot-rig-eye soot-rig-eye-${eyeIndex + 1}`}
+                key={eye.src}
+                src={eye.src}
+                alt=""
+                draggable="false"
+                style={{ transformOrigin: `${eye.origin[0]}% ${eye.origin[1]}%` }}
+              />
+            ))}
+          </div>
         </div>
       ))}
       <div className="soot-light-stars">

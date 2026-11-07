@@ -4848,7 +4848,7 @@ body {
   top: 0;
   left: 0;
   width: 72px;
-  height: 72px;
+  height: auto;
   isolation: isolate;
   transform-origin: center;
   will-change: transform;
@@ -4856,12 +4856,10 @@ body {
 
 .soot-light-beetle-2 {
   width: 66px;
-  height: 66px;
 }
 
 .soot-light-beetle-3 {
   width: 60px;
-  height: 60px;
 }
 
 .soot-light-aura {
@@ -4903,15 +4901,72 @@ body {
   );
 }
 
-.soot-light-beetle img {
-  position: relative;
+.soot-rig {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  --step-duration: 550ms;
+}
+
+.soot-rig-layer {
+  position: absolute;
+  inset: 0;
   display: block;
   width: 100%;
   height: 100%;
-  object-fit: contain;
   filter: drop-shadow(0 0 5px var(--soot-light-color))
     drop-shadow(0 0 12px color-mix(in srgb, var(--soot-light-color) 62%, transparent));
   user-select: none;
+  pointer-events: none;
+}
+
+.soot-rig-body {
+  transform-origin: center;
+}
+
+.soot-light-beetle.is-walking .soot-rig-body {
+  animation: soot-body-step var(--step-duration) ease-in-out infinite;
+}
+
+.soot-light-beetle.is-walking .soot-rig-leg-1 {
+  animation: soot-leg-step-1 var(--step-duration) ease-in-out infinite;
+}
+
+.soot-light-beetle.is-walking .soot-rig-leg-2 {
+  animation: soot-leg-step-2 var(--step-duration) ease-in-out infinite;
+}
+
+.soot-rig-leg {
+  transition: transform 200ms ease-out;
+}
+
+.soot-rig-eye {
+  animation: soot-eye-blink var(--blink-duration) linear var(--blink-delay) infinite;
+}
+
+@keyframes soot-body-step {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-1.5px); }
+}
+
+@keyframes soot-leg-step-1 {
+  0%, 100% { transform: rotate(-16deg); }
+  50% { transform: rotate(16deg); }
+}
+
+@keyframes soot-leg-step-2 {
+  0%, 100% { transform: rotate(16deg); }
+  50% { transform: rotate(-16deg); }
+}
+
+@keyframes soot-eye-blink {
+  0%, 24.9%, 26.4%, 58.23%, 59.73%, 91.57%, 93.07%, 94.5%, 95.9%, 100% {
+    transform: scaleY(1);
+  }
+  25.3%, 58.63%, 91.97%, 94.9% {
+    transform: scaleY(0.08);
+  }
 }
 
 .soot-light-shadow {
@@ -4946,7 +5001,7 @@ body {
   animation-duration: 1.1s;
 }
 
-.soot-lights.is-hovering .soot-light-beetle img {
+.soot-lights.is-hovering .soot-rig-layer {
   filter: drop-shadow(0 0 8px var(--soot-light-color))
     drop-shadow(0 0 18px color-mix(in srgb, var(--soot-light-color) 72%, transparent));
 }
@@ -5004,6 +5059,21 @@ body {
   animation: none;
 }
 
+.soot-lights.is-reduced-motion .soot-rig-body,
+.soot-lights.is-reduced-motion .soot-rig-leg,
+.soot-lights.is-reduced-motion .soot-rig-eye {
+  animation: none;
+}
+
+.soot-lights.is-reduced-motion .soot-rig-leg,
+.soot-lights.is-reduced-motion .soot-rig-eye {
+  transform: none;
+}
+
+.soot-lights.is-reduced-motion .soot-rig-leg {
+  transition: none;
+}
+
 .soot-lights.is-reduced-motion .soot-light-spark {
   display: none;
 }
@@ -5011,6 +5081,21 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .soot-lights .soot-light-aura {
     animation: none;
+  }
+
+  .soot-lights .soot-rig-body,
+  .soot-lights .soot-rig-leg,
+  .soot-lights .soot-rig-eye {
+    animation: none;
+  }
+
+  .soot-lights .soot-rig-leg,
+  .soot-lights .soot-rig-eye {
+    transform: none;
+  }
+
+  .soot-lights .soot-rig-leg {
+    transition: none;
   }
 }
 

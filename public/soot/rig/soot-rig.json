@@ -1,0 +1,119 @@
+{
+ "soot-1": {
+  "size": [
+   270,
+   220
+  ],
+  "body": "soot-1-body.png",
+  "legs": [
+   {
+    "file": "soot-1-leg1.png",
+    "pivot": [
+     28.52,
+     69.09
+    ]
+   },
+   {
+    "file": "soot-1-leg2.png",
+    "pivot": [
+     79.26,
+     57.73
+    ]
+   }
+  ],
+  "eyes": [
+   {
+    "file": "soot-1-eye1.png",
+    "center": [
+     45.49,
+     38.3
+    ]
+   },
+   {
+    "file": "soot-1-eye2.png",
+    "center": [
+     59.87,
+     30.67
+    ]
+   }
+  ]
+ },
+ "soot-2": {
+  "size": [
+   209,
+   220
+  ],
+  "body": "soot-2-body.png",
+  "legs": [
+   {
+    "file": "soot-2-leg1.png",
+    "pivot": [
+     27.75,
+     75.0
+    ]
+   },
+   {
+    "file": "soot-2-leg2.png",
+    "pivot": [
+     85.17,
+     70.45
+    ]
+   }
+  ],
+  "eyes": [
+   {
+    "file": "soot-2-eye1.png",
+    "center": [
+     47.92,
+     50.99
+    ]
+   },
+   {
+    "file": "soot-2-eye2.png",
+    "center": [
+     63.73,
+     56.11
+    ]
+   }
+  ]
+ },
+ "soot-3": {
+  "size": [
+   140,
+   220
+  ],
+  "body": "soot-3-body.png",
+  "legs": [
+   {
+    "file": "soot-3-leg1.png",
+    "pivot": [
+     31.43,
+     92.27
+    ]
+   },
+   {
+    "file": "soot-3-leg2.png",
+    "pivot": [
+     85.71,
+     74.09
+    ]
+   }
+  ],
+  "eyes": [
+   {
+    "file": "soot-3-eye1.png",
+    "center": [
+     32.28,
+     60.98
+    ]
+   },
+   {
+    "file": "soot-3-eye2.png",
+    "center": [
+     54.67,
+     56.85
+    ]
+   }
+  ]
+ }
+}
